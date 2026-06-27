@@ -11,7 +11,6 @@
   <body>
     <header class="site-header">
       <img class="brand-logo" src="logo.png" alt="Wholesale Payments — Team Maverick" />
-      <p class="tagline">Photograph a handwritten merchant application and supporting documents — get a clean typed application, a pre-filled coversheet, and a Clover menu import.</p>
     </header>
 
     <nav class="mode-tabs" role="tablist" aria-label="Workflow">
@@ -27,11 +26,6 @@
         <!-- Step 1: upload -->
         <section id="appUpload" class="card">
           <h2 class="step-title"><span class="step-num">1</span> Upload the application &amp; supporting documents</h2>
-          <p class="muted small">
-            Add photos of the handwritten <strong>application pages</strong>, the <strong>voided check</strong>
-            (for bank name, routing &amp; account #), and the owner's <strong>driver's license(s)</strong>
-            (for owner name, address, DOB &amp; license #). The app auto-detects whether it's the Citizens or Merrick form.
-          </p>
           <div id="appDropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload images">
             <input id="appFileInput" type="file" accept="image/*" multiple capture="environment" hidden />
             <div class="dropzone-inner">
@@ -60,11 +54,6 @@
             <h2 class="step-title"><span class="step-num">2</span> Review &amp; complete</h2>
             <div id="detectBadge" class="detect-badge"></div>
           </div>
-          <p class="muted small">
-            Everything the AI read is below — <strong>edit any field, and fill in anything that was blank or
-            unreadable</strong> before generating. Detected document type:
-          </p>
-
           <div class="field-row">
             <label class="field">
               <span>Application form</span>
@@ -95,7 +84,6 @@
       <div id="menuMode" class="hidden">
         <section id="menuUpload" class="card">
           <h2 class="step-title"><span class="step-num">1</span> Upload the menu</h2>
-          <p class="muted small">Photograph each page of the menu. The AI extracts items, prices and categories and fills the Clover inventory import template.</p>
           <div id="menuDropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload menu photos">
             <input id="menuFileInput" type="file" accept="image/*" multiple capture="environment" hidden />
             <div class="dropzone-inner">
@@ -119,7 +107,6 @@
 
         <section id="menuReview" class="card hidden">
           <h2 class="step-title"><span class="step-num">2</span> Review items</h2>
-          <p class="muted small">Edit, add or remove items. Prices are numbers only. Then download the Clover-ready spreadsheet.</p>
           <label class="field" style="max-width: 320px">
             <span>Restaurant name (file name)</span>
             <input id="restaurantName" type="text" placeholder="Restaurant name" />

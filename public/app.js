@@ -147,6 +147,7 @@ const REVIEW_SECTIONS = [
       ["business.locationCity", "City"],
       ["business.locationState", "State"],
       ["business.locationZip", "ZIP"],
+      ["__sameAsDba", "Corporate address same as DBA / location address", "sameAsDba"],
       ["business.corpAddress", "Corporate address"],
       ["business.corpCity", "Corp city"],
       ["business.corpState", "Corp state"],
@@ -191,18 +192,108 @@ const REVIEW_SECTIONS = [
     ["transaction.previousProcessor", "Previous processor"],
     ["transaction.reasonForLeaving", "Reason for leaving"],
   ]},
-  { title: "Fees", fields: [
+  { title: "Fees — authorization / monthly / misc", fields: [
     ["fees.authVmcda", "Auth Visa/MC/Disc/Amex ($)"],
+    ["fees.fleet", "Fleet card ($)"],
+    ["fees.pinDebit", "Pin debit ($)"],
+    ["fees.pinDebitPct", "Pin debit (%)"],
+    ["fees.ebt", "EBT ($)"],
+    ["fees.salesTxn", "Sales transaction ($)"],
     ["fees.monthlyService", "Monthly service ($)"],
     ["fees.monthlyMinimum", "Monthly minimum ($)"],
-    ["fees.annual", "Annual fee ($)"],
+    ["fees.wireless", "Wireless ($)"],
+    ["fees.pinDebitMonthly", "Pin debit monthly ($)"],
+    ["fees.industryCompliance", "Industry compliance ($)"],
     ["fees.chargeback", "Chargeback ($)"],
-    ["fees.earlyTermination", "Early termination ($)"],
+    ["fees.retrieval", "Retrieval ($)"],
+    ["fees.achReject", "ACH reject ($)"],
+    ["fees.annual", "Annual fee ($)"],
+    ["fees.equipmentRental", "Equipment monthly rental ($)"],
+    ["fees.monthToBill", "Month to bill"],
+    ["fees.earlyTermination", "Early termination / ETF ($)"],
+    ["fees.basilPos", "Basil POS ($) — Merrick"],
+    ["fees.saasFee", "SAAS fee ($) — Merrick"],
+    ["fees.inactivityFee", "Inactivity fee ($) — Merrick"],
+    ["fees.gatewayMonthly", "Gateway monthly ($) — Merrick"],
+    ["fees.gatewayTxn", "Gateway transaction ($) — Merrick"],
+    ["fees.monthlyMisc", "Monthly misc ($) — Merrick"],
   ]},
-  { title: "Sales / coversheet", fields: [
-    ["sales.salesAgentName", "Sales agent / partner name"],
-    ["sales.salesOffice", "Sales office / territory"],
-    ["sales.salesRep", "Sales rep"],
+  { title: "Service acceptance & fee schedule", fields: [
+    ["serviceAcceptance.cardVisaCredit", "Visa credit", "checkbox"],
+    ["serviceAcceptance.cardVisaDebit", "Visa debit", "checkbox"],
+    ["serviceAcceptance.cardMcCredit", "Mastercard credit", "checkbox"],
+    ["serviceAcceptance.cardMcDebit", "Mastercard debit", "checkbox"],
+    ["serviceAcceptance.cardDiscover", "Discover", "checkbox"],
+    ["serviceAcceptance.cardAmex", "Amex", "checkbox"],
+    ["serviceAcceptance.cardPin", "Pin debit", "checkbox"],
+    ["serviceAcceptance.cardEbt", "EBT (Merrick)", "checkbox"],
+    ["serviceAcceptance.discountPlan", "Discount plan", "select", [["", "—"], ["flat", "Flat Rate"], ["passthrough", "Passthrough IC"]]],
+    ["serviceAcceptance.flatCreditPct", "Flat credit %"],
+    ["serviceAcceptance.flatDebitPct", "Flat debit %"],
+    ["serviceAcceptance.flatAmexPct", "Flat amex % (Merrick)"],
+    ["serviceAcceptance.passCreditPct", "Passthrough credit %"],
+    ["serviceAcceptance.passDebitPct", "Passthrough debit %"],
+    ["serviceAcceptance.passAmexPct", "Passthrough amex %"],
+    ["serviceAcceptance.assessments", "Assessments", "select", [["", "—"], ["included", "Included"], ["billed", "Billed Separately"]]],
+    ["serviceAcceptance.paymentMethod", "Discount payment method", "select", [["", "—"], ["daily", "Daily"], ["monthly", "Monthly"]]],
+  ]},
+  { title: "Signatures (printed name / title / date)", fields: [
+    ["signatures.printedName", "Signer 1 printed name"],
+    ["signatures.title", "Signer 1 title"],
+    ["signatures.date", "Signer 1 date"],
+    ["signatures.printedName2", "Signer 2 printed name"],
+    ["signatures.title2", "Signer 2 title"],
+    ["signatures.date2", "Signer 2 date"],
+  ]},
+  { title: "Equipment", fields: [
+    ["equipment.0.type", "Item 1 type"],
+    ["equipment.0.model", "Item 1 model"],
+    ["equipment.0.quantity", "Item 1 qty"],
+    ["equipment.1.type", "Item 2 type"],
+    ["equipment.1.model", "Item 2 model"],
+    ["equipment.1.quantity", "Item 2 qty"],
+    ["equipment.2.type", "Item 3 type"],
+    ["equipment.2.model", "Item 3 model"],
+    ["equipment.2.quantity", "Item 3 qty"],
+  ]},
+  { title: "Coversheet — set-up form", fields: [
+    ["sales.salesAgentName", "Sales partner name"],
+    ["coversheet.territoryManager", "Territory manager"],
+    ["coversheet.teamColor", "Team color"],
+    ["coversheet.platform", "Requested platform", "select", [["", "—"], ["tsys", "TSYS (Synovus)"], ["fdomaha", "FD Omaha (Wells Fargo)"], ["fdnorth", "FD North (Synovus)"], ["other", "Other"]]],
+    ["coversheet.platformOther", "Platform — other"],
+    ["coversheet.telemarketing", "Telemarketing lead", "checkbox"],
+    ["coversheet.reBoard", "Re-board", "checkbox"],
+    ["coversheet.docPictures", "Pictures inside & out", "checkbox"],
+    ["coversheet.docStatements", "Statements", "checkbox"],
+    ["coversheet.etf", "Boarding ETF ($)"],
+    ["coversheet.annualFee", "Boarding annual fee ($)"],
+    ["coversheet.monthlyMin", "Boarding monthly min ($)"],
+    ["coversheet.svcFee", "Boarding svc fee ($)"],
+    ["coversheet.cashDiscount", "Cash discount", "checkbox"],
+    ["coversheet.cashDiscountTerminalRate", "Cash discount terminal rate"],
+    ["coversheet.bypassFee", "Bypass fee option", "checkbox"],
+    ["coversheet.shipping", "Shipping to", "select", [["", "—"], ["dba", "DBA Address"], ["agent", "Sales Agent Address"], ["other", "Other"]]],
+    ["coversheet.shippingOther", "Shipping — other"],
+    ["coversheet.vasGiftCards", "Gift cards", "checkbox"],
+    ["coversheet.vasCheckServices", "Check services", "checkbox"],
+    ["coversheet.vasWpiRewards", "WPI rewards", "checkbox"],
+    ["coversheet.vasCustomerConnect", "Customer connect", "checkbox"],
+    ["coversheet.fbAppType", "File build — application type", "select", [["", "—"], ["retail", "Retail"], ["restaurant", "Restaurant"], ["ecommerce", "E-Commerce"], ["moto", "Moto"]]],
+    ["coversheet.fbConnection", "File build — connection", "select", [["", "—"], ["ethernet", "Ethernet"], ["dial", "Dial"], ["wifi", "Wifi"], ["wireless", "Wireless 3g/4g"]]],
+    ["coversheet.enPinDebit", "Enable Pin Debit", "checkbox"],
+    ["coversheet.enEbt", "Enable EBT", "checkbox"],
+    ["coversheet.enWex", "Enable Wex/Voyager", "checkbox"],
+    ["coversheet.fnsNumber", "FNS #"],
+    ["coversheet.autoClose", "Auto close", "checkbox"],
+    ["coversheet.autoCloseTime", "Auto close time"],
+    ["coversheet.timezone", "Timezone", "select", [["", "—"], ["pst", "PST"], ["mst", "MST"], ["cst", "CST"], ["est", "EST"]]],
+    ["coversheet.tips", "Tips", "select", [["", "—"], ["none", "None"], ["tipline", "Tip Line"], ["tipprompt", "Tip Prompt"]]],
+    ["coversheet.serverNumbers", "Server #'s", "checkbox"],
+    ["coversheet.avsCvv", "AVS/CVV", "checkbox"],
+    ["coversheet.invoiceNumber", "Invoice #", "checkbox"],
+    ["coversheet.specialOther", "Special prompts — other"],
+    ["coversheet.notes", "Notes & special instructions"],
   ]},
 ];
 
@@ -231,9 +322,29 @@ function renderReviewForm(record) {
   container.innerHTML = "";
 
   const makeField = (path, label, type, options) => {
-    const value = getPath(record, path) ?? "";
+    const value = getPath(record, path);
+    if (type === "checkbox" || type === "sameAsDba") {
+      const lab = document.createElement("label");
+      lab.className = "field checkfield";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      if (type === "sameAsDba") {
+        cb.id = "sameAsDbaToggle";
+        cb.addEventListener("change", () => applySameAsDba(cb.checked));
+      } else {
+        cb.checked = Boolean(value);
+        cb.dataset.path = path;
+        cb.dataset.type = "checkbox";
+      }
+      lab.appendChild(cb);
+      const span = document.createElement("span");
+      span.textContent = label;
+      lab.appendChild(span);
+      return lab;
+    }
     const wrap = document.createElement("label");
-    wrap.className = "field" + (value === "" ? " empty" : "");
+    const isEmpty = value === "" || value == null;
+    wrap.className = "field" + (isEmpty ? " empty" : "");
     const span = document.createElement("span");
     span.textContent = label;
     wrap.appendChild(span);
@@ -241,16 +352,17 @@ function renderReviewForm(record) {
     if (type === "select") {
       inputEl = document.createElement("select");
       options.forEach((o) => {
+        const [ov, ol] = Array.isArray(o) ? o : [o, o === "" ? "—" : o];
         const opt = document.createElement("option");
-        opt.value = o;
-        opt.textContent = o === "" ? "—" : o;
-        if (o === value) opt.selected = true;
+        opt.value = ov;
+        opt.textContent = ol;
+        if (ov === value) opt.selected = true;
         inputEl.appendChild(opt);
       });
     } else {
       inputEl = document.createElement("input");
       inputEl.type = "text";
-      inputEl.value = value;
+      inputEl.value = value ?? "";
     }
     inputEl.dataset.path = path;
     inputEl.addEventListener("input", () => wrap.classList.toggle("empty", inputEl.value === ""));
@@ -307,6 +419,37 @@ function renderReviewForm(record) {
   });
   det.appendChild(body);
   container.appendChild(det);
+
+  // Keep the corporate address mirroring the DBA / location address while the toggle is on.
+  const toggle = document.getElementById("sameAsDbaToggle");
+  ["business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip"].forEach((p) => {
+    container.querySelector(`[data-path="${p}"]`)?.addEventListener("input", () => {
+      if (toggle && toggle.checked) applySameAsDba(true);
+    });
+  });
+}
+
+function applySameAsDba(checked) {
+  const pairs = [
+    ["business.locationAddress", "business.corpAddress"],
+    ["business.locationCity", "business.corpCity"],
+    ["business.locationState", "business.corpState"],
+    ["business.locationZip", "business.corpZip"],
+  ];
+  pairs.forEach(([src, dst]) => {
+    const s = document.querySelector(`[data-path="${src}"]`);
+    const d = document.querySelector(`[data-path="${dst}"]`);
+    if (!s || !d) return;
+    if (checked) {
+      d.value = s.value;
+      d.readOnly = true;
+      const f = d.closest(".field");
+      if (f) { f.classList.remove("empty"); f.classList.add("mirrored"); }
+    } else {
+      d.readOnly = false;
+      d.closest(".field")?.classList.remove("mirrored");
+    }
+  });
 }
 
 function collectReview() {
