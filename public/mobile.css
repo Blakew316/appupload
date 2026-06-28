@@ -1,0 +1,109 @@
+/* ==========================================================================
+   mobile.css — iOS / small-screen enhancements.
+   Everything is scoped under @media (max-width: 768px), so on desktop
+   (>=769px) NONE of these rules apply and the existing build is untouched.
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Stop iOS from inflating text; keep momentum scrolling and tame tap flash. */
+  html { -webkit-text-size-adjust: 100%; }
+  * { -webkit-tap-highlight-color: rgba(47, 93, 143, 0.12); }
+
+  body {
+    min-height: 100vh;            /* base for iOS < 15.4 (no svh/dvh support) */
+    min-height: 100svh;           /* small viewport unit — avoids iOS toolbar jump */
+    min-height: 100dvh;           /* dynamic viewport where supported */
+    /* clear the notch in landscape; insets are 0 in portrait */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* iOS Safari zooms the page when focusing an input whose font-size < 16px.
+     Force every control to 16px so focusing a field never zooms. */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ---- Header ---- */
+  .site-header { padding: calc(env(safe-area-inset-top) + 12px) 16px 0; }
+  .brand-logo { width: 200px; max-width: 72%; }
+
+  /* ---- Layout shell ---- */
+  main { padding: 6px 14px calc(env(safe-area-inset-bottom) + 28px); }
+  .card { padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+  .step-title { font-size: 1.05rem; }
+
+  /* ---- Mode tabs: equal-width, no horizontal scroll ---- */
+  .mode-tabs { padding: 0 14px; gap: 6px; }
+  .mode-tab { flex: 1 1 0; text-align: center; padding: 11px 8px; font-size: 0.9rem; }
+
+  /* ---- Sales rep bar: stack label over a full-width control ---- */
+  .rep-bar { padding: 0 0 6px; }
+  .rep-bar label { display: flex; flex-direction: column; align-items: stretch; width: 100%; gap: 5px; }
+  .rep-bar input, .rep-bar select { min-width: 0; width: 100%; box-sizing: border-box; }
+
+  /* ---- Upload header: stack title + manual form picker ---- */
+  .upload-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .jump-form { align-items: stretch; }
+  .jump-form select { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px; min-height: 44px; }
+
+  /* ---- Dropzone ---- */
+  .dropzone { padding: 26px 14px; }
+  .dropzone-icon { font-size: 1.9rem; }
+
+  /* ---- Thumbnails ---- */
+  .thumb-list { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
+
+  /* ---- Buttons: comfortable tap targets ---- */
+  .btn { padding: 12px 16px; min-height: 46px; }
+  .actions { flex-wrap: wrap; }
+  .actions .btn { flex: 1 1 auto; }
+
+  /* ---- Review header: stack detect badge + jump-to-form ---- */
+  .result-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .head-right { align-items: stretch; }
+  .detect-badge { display: inline-block; white-space: normal; }
+
+  /* ---- Review form: one field per row ---- */
+  .field-row { grid-template-columns: 1fr; gap: 12px; }
+  .field input, .field select { padding: 12px; min-height: 44px; }
+  .section-body { padding: 14px 14px; }
+
+  /* ---- Generate / download buttons: full-width stack ---- */
+  .generate-actions { flex-direction: column; align-items: stretch; }
+  .generate-actions .btn { width: 100%; }
+
+  /* ---- History ---- */
+  .history-head { flex-wrap: wrap; gap: 8px; }
+  .history-filters { flex-direction: column; align-items: stretch; }
+  /* reset the base `flex: 1 1 220px` so the search box doesn't grow tall in a column */
+  .history-filters .history-search, .rep-filter { flex: 0 0 auto; width: 100%; box-sizing: border-box; }
+  .history-open strong, .history-meta { overflow-wrap: anywhere; }
+  /* 44px hit area + more gap so export/delete aren't mis-tapped (glyph size unchanged) */
+  .history-item { gap: 10px; }
+  .history-exp, .history-del { width: 44px; height: 44px; }
+
+  /* ---- Menu → Clover table: scroll horizontally with momentum ---- */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  .menu-table { min-width: 620px; }
+  .menu-table th:nth-child(4), .menu-table td:nth-child(4) { min-width: 180px; } /* Description gets room */
+  .menu-table th:last-child, .menu-table td:last-child { width: 46px; }          /* delete column */
+  .row-del { min-width: 44px; min-height: 44px; padding: 0 10px; }               /* tappable delete */
+}
+
+/* Extra-small phones (iPhone SE / mini) */
+@media (max-width: 380px) {
+  .card { padding: 14px; }
+  .mode-tab { font-size: 0.84rem; padding: 10px 5px; }
+  .brand-logo { width: 168px; }
+  main { padding-left: 12px; padding-right: 12px; }
+}
+
+/* Large phones in landscape are wider than 768px, so the main block drops out.
+   Keep the two iOS-critical fixes (no input-zoom, notch insets) on touch devices.
+   `pointer: coarse` means a real touch screen, so a narrowed desktop window is never affected. */
+@media (max-width: 932px) and (orientation: landscape) and (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
