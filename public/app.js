@@ -377,10 +377,12 @@ const MANAGER_KEY = "appupload.manager";
 // Sales agents shown in the rep dropdown (and seeded into the history rep filter).
 const AGENTS = [
   "Jaden Dufek", "Sadie Scoville", "Timothy Constenius", "Gabriel Craft",
-  "Judah Steelman", "Justin Woodruff", "Adam Drexler", "Jason Coutcher",
+  "Judah Steelman", "Adam Drexler", "Jason Coutcher",
   "Lloyd Cruz", "Isaac Jenkins", "Jabe Schoenrock", "Max Alperstein",
   "Seth Manshum", "Walter Smith",
 ];
+// Default territory manager (you) — auto-populates the form when none is set.
+const DEFAULT_MANAGER = "Blake Woodruff";
 let currentHistoryId = null;
 let HISTORY_BACKEND = "local"; // becomes 'supabase' when the server has a database configured
 
@@ -400,15 +402,10 @@ const repFor = (record) => getCurrentRep() || (record && record.sales && record.
 
 function getCurrentManager() {
   try {
-    return localStorage.getItem(MANAGER_KEY) || "";
+    return localStorage.getItem(MANAGER_KEY) || DEFAULT_MANAGER;
   } catch {
-    return "";
+    return DEFAULT_MANAGER;
   }
-}
-function setCurrentManager(v) {
-  try {
-    localStorage.setItem(MANAGER_KEY, v);
-  } catch {}
 }
 // The manager name (the person running this) defaults the coversheet territory
 // manager, which in turn defaults the purchase order's sales manager. Only fills
@@ -1053,7 +1050,6 @@ function switchMode(mode) {
 async function checkHealth() {
   try {
     const data = await (await fetch("/api/health")).json();
-    el("modelInfo").textContent = data.mock ? "Running in demo mode." : `Powered by ${data.model}.`;
     if (!data.ready) showBanner("warn", "Not configured: set ANTHROPIC_API_KEY on the server (or TRANSCRIBE_MOCK=1 for a demo).");
     else if (data.mock) showBanner("info", "Demo mode: uploads return sample data so you can preview the workflow.");
     HISTORY_BACKEND = data.historyBackend || "local";
@@ -1109,18 +1105,6 @@ function init() {
   el("exportAllBtn").addEventListener("click", exportAll);
   populateRepPicker();
   el("repInput").addEventListener("change", (e) => setCurrentRep(e.target.value));
-  const managerInput = el("managerInput");
-  managerInput.value = getCurrentManager();
-  managerInput.addEventListener("input", () => {
-    const v = managerInput.value.trim();
-    setCurrentManager(v);
-    // If the review form is open and territory manager is still blank, fill it live.
-    const tm = document.querySelector('#reviewForm [data-path="coversheet.territoryManager"]');
-    if (tm && !tm.value) {
-      tm.value = v;
-      tm.dispatchEvent(new Event("input"));
-    }
-  });
   el("clearHistoryBtn").addEventListener("click", async () => {
     if (!confirm("Clear all saved submissions?")) return;
     if (HISTORY_BACKEND === "supabase") {

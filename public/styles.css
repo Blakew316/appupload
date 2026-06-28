@@ -3,8 +3,8 @@
   --bg-grad-1: #ffffff;
   --bg-grad-2: #ffffff;
   --card: #ffffff;
-  --ink: #1f2430;
-  --ink-soft: #5b6473;
+  --ink: #14274e; /* navy — default body/lettering color */
+  --ink-soft: #3a4d7a; /* muted navy — secondary text */
   --line: #e3e5e9;
   --accent: #2f5d50;
   --accent-dark: #234a40;
@@ -308,13 +308,17 @@ main {
 .rep-set { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
 .rep-set input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: inherit; font-size: 0.88rem; width: 130px; background: #fafbfc; }
 .history-empty { color: var(--ink-soft); font-size: 0.9rem; padding: 8px 2px; list-style: none; }
-.history-exp {
-  width: 38px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
-  color: var(--accent-dark); font-size: 1rem; cursor: pointer;
+.history-exp, .history-del {
+  flex: none; width: 28px; height: 28px; padding: 0;
+  display: grid; place-items: center;
+  border: none; border-radius: 50%; background: transparent;
+  color: var(--ink-soft); cursor: pointer; line-height: 1;
+  transition: background 0.15s, color 0.15s;
 }
-.history-exp:hover { background: var(--accent-soft); border-color: var(--accent); }
+.history-exp { font-size: 0.9rem; }
+.history-exp:hover { background: var(--accent-soft); color: var(--accent-dark); }
 .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.history-item { display: flex; align-items: stretch; gap: 6px; }
+.history-item { display: flex; align-items: center; gap: 6px; }
 .history-open {
   flex: 1; text-align: left; cursor: pointer; font: inherit;
   background: #fafbfc; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
@@ -323,11 +327,8 @@ main {
 .history-open:hover { background: var(--accent-soft); border-color: var(--accent); }
 .history-open strong { color: var(--accent-dark); font-size: 0.95rem; }
 .history-meta { color: var(--ink-soft); font-size: 0.8rem; }
-.history-del {
-  width: 38px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
-  color: var(--ink-soft); font-size: 1.2rem; cursor: pointer;
-}
-.history-del:hover { background: #fbe6e0; color: var(--danger); border-color: #f0c4b8; }
+.history-del { font-size: 1.05rem; }
+.history-del:hover { background: #fbe6e0; color: var(--danger); }
 
 /* Review header right column */
 .head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
