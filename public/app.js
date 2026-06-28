@@ -751,46 +751,31 @@ function renderReviewForm(record) {
       return lab;
     }
     if (type === "modelSelect") {
+      // Combobox: type to search the pricing matrix, or type any custom equipment
+      // the merchant is requesting that isn't on the list.
       const wrap = document.createElement("label");
       wrap.className = "field field-wide" + (value ? "" : " empty");
       const span = document.createElement("span");
       span.textContent = label;
       wrap.appendChild(span);
-      const sel = document.createElement("select");
-      sel.dataset.path = path;
-      const blank = document.createElement("option");
-      blank.value = "";
-      blank.textContent = "— none —";
-      sel.appendChild(blank);
-      const groups = {};
-      EQUIPMENT_MODELS.forEach((m) => (groups[m.category] = groups[m.category] || []).push(m));
-      Object.keys(groups).sort().forEach((cat) => {
-        const og = document.createElement("optgroup");
-        og.label = cat;
-        groups[cat].forEach((m) => {
-          const o = document.createElement("option");
-          o.value = m.model;
-          o.textContent = `${m.model} — $${m.price}`;
-          og.appendChild(o);
-        });
-        sel.appendChild(og);
-      });
-      if (value && ![...sel.options].some((o) => o.value === value)) {
-        const o = document.createElement("option");
-        o.value = value;
-        o.textContent = value;
-        sel.insertBefore(o, blank.nextSibling);
-      }
-      sel.value = value || "";
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.dataset.path = path;
+      inp.setAttribute("list", "equipmentModels");
+      inp.setAttribute("autocomplete", "off");
+      inp.placeholder = "Choose from the list or type custom equipment…";
+      inp.value = value || "";
       const hint = document.createElement("span");
       hint.className = "price-hint";
       const sync = () => {
-        wrap.classList.toggle("empty", sel.value === "");
-        const m = EQUIPMENT_MODELS.find((x) => x.model === sel.value);
-        hint.textContent = m ? `${m.category} · $${m.price}` : "";
+        const v = inp.value.trim();
+        wrap.classList.toggle("empty", v === "");
+        const m = EQUIPMENT_MODELS.find((x) => x.model.toLowerCase() === v.toLowerCase());
+        hint.textContent = m ? `${m.category} · $${m.price}` : (v ? "Custom item — no preset price" : "");
       };
-      sel.addEventListener("change", sync);
-      wrap.appendChild(sel);
+      inp.addEventListener("input", sync);
+      inp.addEventListener("change", sync);
+      wrap.appendChild(inp);
       wrap.appendChild(hint);
       sync();
       return wrap;
