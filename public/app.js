@@ -341,8 +341,13 @@ function buildEquipmentDatalist() {
 }
 
 // Which review sections matter for each form, so picking a form shows only those fields.
+// Citizens and Merrick are entirely separate applications; they share the same
+// review data but are chosen independently.
+const APP_SECTIONS = ["Business", "Owner / Principal 1", "Owner / Principal 2", "Banking (from voided check)", "Transaction", "Fees — authorization / monthly / misc", "Service acceptance & fee schedule", "Signatures (printed name / title / date)", "Documents provided"];
 const FORM_SECTIONS = {
-  application: ["Business", "Owner / Principal 1", "Owner / Principal 2", "Banking (from voided check)", "Transaction", "Fees — authorization / monthly / misc", "Service acceptance & fee schedule", "Signatures (printed name / title / date)", "Documents provided"],
+  citizens: APP_SECTIONS,
+  merrick: APP_SECTIONS,
+  application: APP_SECTIONS, // fallback alias
   coversheet: ["Coversheet — set-up form", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
   clover: ["Business", "Signatures (printed name / title / date)"],
@@ -627,8 +632,10 @@ function paintHistory() {
 
 let appView = "upload";
 function updateHistoryVisibility() {
+  // Show the section whenever we're on the home/upload view. Deleting the last
+  // item then shows the empty-state message rather than making the section vanish.
   const sec = el("historySection");
-  if (sec) sec.classList.toggle("hidden", !(appView === "upload" && historyCache.length > 0));
+  if (sec) sec.classList.toggle("hidden", appView !== "upload");
 }
 async function resumeHistory(id) {
   const record = await historyGet(id);
@@ -656,10 +663,12 @@ function startBlankForm(key) {
     workingRecord = blankRecord();
     currentHistoryId = null;
   }
+  // Citizens / Merrick are distinct applications — lock the app type to the choice.
+  if (key === "citizens" || key === "merrick") workingRecord.appType = key;
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["application", "coversheet", "po", "clover"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "coversheet", "po", "clover"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1098,7 +1107,14 @@ function init() {
   el("genCoverBtn").addEventListener("click", () => generate("coversheet"));
   el("genPoBtn").addEventListener("click", () => generate("po"));
   el("genCloverBtn").addEventListener("click", () => generate("clover"));
-  el("jumpFormSelect").addEventListener("change", (e) => focusForm(e.target.value));
+  el("jumpFormSelect").addEventListener("change", (e) => {
+    const v = e.target.value;
+    if (v === "citizens" || v === "merrick") {
+      el("appTypeSelect").value = v;
+      if (workingRecord) workingRecord.appType = v;
+    }
+    focusForm(v);
+  });
   el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
   el("historySearch").addEventListener("input", paintHistory);
   el("repFilter").addEventListener("change", paintHistory);

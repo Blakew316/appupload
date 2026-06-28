@@ -6,9 +6,9 @@
   --ink: #14274e; /* navy — default body/lettering color */
   --ink-soft: #3a4d7a; /* muted navy — secondary text */
   --line: #e3e5e9;
-  --accent: #2f5d50;
-  --accent-dark: #234a40;
-  --accent-soft: #e7f0ec;
+  --accent: #1e3f8f; /* navy blue — buttons, links, accents */
+  --accent-dark: #15296b; /* deeper navy — hovers, emphasis text */
+  --accent-soft: #e8eef9; /* light blue tint — soft fills, focus rings */
   --danger: #b4452f;
   --warn-bg: #fdf3d8;
   --warn-ink: #6b5414;
@@ -341,7 +341,7 @@ main {
 
 /* Detected badge */
 .detect-badge { font-size: 0.85rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; }
-.detect-badge.citizens { background: #e7f0ec; color: var(--accent-dark); }
+.detect-badge.citizens { background: var(--accent-soft); color: var(--accent-dark); }
 .detect-badge.merrick { background: #e9ecf7; color: #2f3e7a; }
 .detect-badge.unknown { background: var(--warn-bg); color: var(--warn-ink); }
 
