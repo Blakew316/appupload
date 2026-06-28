@@ -1118,6 +1118,16 @@ function showSection(mode, which) {
   if (which !== "review") hideBanner();
 }
 
+// Reset the Merchant Application workflow back to the upload home screen.
+function goHome() {
+  switchMode("app");
+  if (appUploader) appUploader.clear();
+  workingRecord = null;
+  currentHistoryId = null;
+  showSection("app", "upload");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function switchMode(mode) {
   const isApp = mode === "app";
   el("tabApp").classList.toggle("active", isApp);
@@ -1201,13 +1211,16 @@ function init() {
     }
     renderHistory();
   });
-  el("appRestartBtn").addEventListener("click", () => {
-    appUploader.clear();
-    workingRecord = null;
-    currentHistoryId = null;
-    showSection("app", "upload");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  el("appRestartBtn").addEventListener("click", goHome);
+
+  // Clicking the brand logo returns to the application upload screen to start over.
+  const logo = el("brandLogo");
+  if (logo) {
+    logo.addEventListener("click", goHome);
+    logo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goHome(); }
+    });
+  }
 
   el("menuExtractBtn").addEventListener("click", extractMenu);
   el("menuClearBtn").addEventListener("click", () => menuUploader.clear());
