@@ -942,7 +942,17 @@ async function extractApplication() {
   }
 }
 
+// Download buttons: none highlighted until the user clicks one.
+function resetGenBtns() {
+  document.querySelectorAll(".gen-btn").forEach((b) => { b.classList.add("btn-secondary"); b.classList.remove("btn-primary"); });
+}
+function selectGenBtn(btn) {
+  resetGenBtns();
+  if (btn) { btn.classList.add("btn-primary"); btn.classList.remove("btn-secondary"); }
+}
+
 function showReview(record, detected = false) {
+  resetGenBtns();
   applyManagerDefault(record);
   el("appTypeSelect").value = record.appType || "unknown";
   const badge = el("detectBadge");
@@ -1147,11 +1157,11 @@ function init() {
 
   el("extractBtn").addEventListener("click", extractApplication);
   el("appClearBtn").addEventListener("click", () => appUploader.clear());
-  el("genPacketBtn").addEventListener("click", () => generate("combined"));
-  el("genAppBtn").addEventListener("click", () => generate("application"));
-  el("genCoverBtn").addEventListener("click", () => generate("coversheet"));
-  el("genPoBtn").addEventListener("click", () => generate("po"));
-  el("genCloverBtn").addEventListener("click", () => generate("clover"));
+  el("genPacketBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("combined"); });
+  el("genAppBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("application"); });
+  el("genCoverBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("coversheet"); });
+  el("genPoBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("po"); });
+  el("genCloverBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("clover"); });
   el("jumpFormSelect").addEventListener("change", (e) => {
     const v = e.target.value;
     if (v === "citizens" || v === "merrick") {
