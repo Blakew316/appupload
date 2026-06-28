@@ -347,6 +347,7 @@ main {
 
 /* Review form */
 .section-off { display: none !important; } /* hidden when a form doesn't use this section */
+.field-hidden { display: none !important; } /* field hidden when the chosen form doesn't use it */
 .review-section { border: 1px solid var(--line); border-radius: 10px; margin: 14px 0; overflow: hidden; }
 .review-section > summary {
   cursor: pointer; padding: 12px 16px; font-weight: 700; background: #f6f7f9;

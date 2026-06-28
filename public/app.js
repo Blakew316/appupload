@@ -353,14 +353,38 @@ const FORM_SECTIONS = {
   clover: ["Business", "Signatures (printed name / title / date)"],
 };
 
+// Within the shown sections, only these field keys matter for a given form, so a
+// shared section (e.g. Business) shows only the fields that form actually uses.
+// An entry ending in "." matches a whole group by prefix; otherwise it's exact.
+const FORM_FIELDS = {
+  po: [
+    "po.", "equipment.",
+    "banking.bankName", "banking.routing", "banking.account",
+    "business.dba", "business.legalName", "business.phone", "business.contactName",
+    "business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip",
+  ],
+  coversheet: [
+    "coversheet.", "documents.", "sales.salesAgentName", "transaction.seasonal",
+    "business.dba", "business.email", "business.federalTaxId",
+  ],
+  clover: [
+    "business.legalName", "business.email",
+    "signatures.printedName", "signatures.title", "signatures.date",
+  ],
+};
+const fieldAllowed = (k, allow) => allow.some((a) => (a.endsWith(".") ? k.startsWith(a) : k === a));
+
 function focusForm(key) {
   const sections = [...document.querySelectorAll("#reviewForm > details.review-section")];
   const wanted = FORM_SECTIONS[key];
+  const allow = FORM_FIELDS[key];
+  const clearFields = (d) => d.querySelectorAll(".field.field-hidden").forEach((f) => f.classList.remove("field-hidden"));
   if (!wanted) {
-    // "All sections" — show everything, open the first.
+    // "All sections" — show everything, open the first, reveal all fields.
     sections.forEach((d, i) => {
       d.classList.remove("section-off");
       d.open = i === 0;
+      clearFields(d);
     });
     return;
   }
@@ -371,6 +395,15 @@ function focusForm(key) {
     d.classList.toggle("section-off", !match); // hide sections this form doesn't use
     d.open = match;
     if (match && !first) first = d;
+    // Within a shown section, hide fields the form doesn't use.
+    if (match && allow) {
+      d.querySelectorAll(".field").forEach((f) => {
+        const k = f.dataset.key || "";
+        f.classList.toggle("field-hidden", Boolean(k) && !fieldAllowed(k, allow));
+      });
+    } else {
+      clearFields(d);
+    }
   });
   if (first) first.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -798,7 +831,11 @@ function renderReviewForm(record) {
     body.className = "section-body";
     const row = document.createElement("div");
     row.className = "field-row";
-    fields.forEach(([path, label, type, options]) => row.appendChild(makeField(path, label, type, options)));
+    fields.forEach(([path, label, type, options]) => {
+      const f = makeField(path, label, type, options);
+      f.dataset.key = path; // used by focusForm for per-form field filtering
+      row.appendChild(f);
+    });
     body.appendChild(row);
     det.appendChild(body);
     container.appendChild(det);
@@ -823,6 +860,7 @@ function renderReviewForm(record) {
   [["documents.hasVoidedCheck", "Voided check included"], ["documents.hasDriversLicense", "Driver's license included"], ["transaction.seasonal", "Seasonal merchant"]].forEach(([path, label]) => {
     const lab = document.createElement("label");
     lab.className = "field checkfield";
+    lab.dataset.key = path;
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = Boolean(getPath(record, path));
