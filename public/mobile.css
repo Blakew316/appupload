@@ -10,6 +10,11 @@
   * { -webkit-tap-highlight-color: rgba(47, 93, 143, 0.12); }
 
   body {
+    /* Grayscale antialiasing — WebKit's default subpixel smoothing makes SF Pro
+       render heavy/thick on iOS; this renders the lettering crisp and light. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     min-height: 100vh;            /* base for iOS < 15.4 (no svh/dvh support) */
     min-height: 100svh;           /* small viewport unit — avoids iOS toolbar jump */
     min-height: 100dvh;           /* dynamic viewport where supported */
