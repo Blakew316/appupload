@@ -367,7 +367,7 @@ main {
   font-size: 0.95rem; color: var(--ink); background: #ffffff; font-family: inherit;
 }
 .field input:focus, .field select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.field.empty input { background: #fdf6e9; border-color: #ecd9a0; }
+/* Empty fields are not pre-highlighted; the focus outline above is the only highlight. */
 .field.mirrored input { background: #eef0f3; color: var(--ink-soft); }
 .checkfield { flex-direction: row; align-items: center; gap: 8px; font-size: 0.92rem; color: var(--ink); }
 .checkfield input { width: 16px; height: 16px; }

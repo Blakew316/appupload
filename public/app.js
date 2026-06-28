@@ -935,22 +935,29 @@ async function extractApplication() {
     workingRecord = data.record;
     currentHistoryId = await historyUpsert(workingRecord);
     renderHistory();
-    showReview(workingRecord);
+    showReview(workingRecord, true); // came from upload + auto-detection
   } catch (e) {
     showSection("app", "upload");
     showBanner("error", e.message);
   }
 }
 
-function showReview(record) {
+function showReview(record, detected = false) {
   applyManagerDefault(record);
   el("appTypeSelect").value = record.appType || "unknown";
   const badge = el("detectBadge");
   const type = record.appType || "unknown";
-  const conf = record.appTypeConfidence || "";
-  badge.className = `detect-badge ${type}`;
-  badge.textContent =
-    type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${type === "citizens" ? "Citizens" : "Merrick"}${conf ? ` (${conf} confidence)` : ""}`;
+  if (detected) {
+    // Only after a real upload + auto-detection do we show the detection result.
+    const conf = record.appTypeConfidence || "";
+    badge.className = `detect-badge ${type}`;
+    badge.textContent =
+      type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${type === "citizens" ? "Citizens" : "Merrick"}${conf ? ` (${conf} confidence)` : ""}`;
+  } else {
+    // Manual form pick or reopened submission — no detection banner.
+    badge.className = "detect-badge hidden";
+    badge.textContent = "";
+  }
   renderReviewForm(record);
   showSection("app", "review");
 }
