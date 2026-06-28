@@ -280,11 +280,12 @@ main {
 /* Always-visible sales rep bar */
 .rep-bar { max-width: 820px; margin: 6px auto 0; padding: 0 0 4px; }
 .rep-bar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
-.rep-bar input {
+.rep-bar input, .rep-bar select {
   border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
   font: inherit; font-size: 0.95rem; color: var(--ink); background: #fafbfc; min-width: 260px;
 }
-.rep-bar input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.rep-bar select { min-width: 220px; }
+.rep-bar input:focus, .rep-bar select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 
 /* Submission history */
 .history { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 16px; }

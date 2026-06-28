@@ -374,6 +374,13 @@ function focusForm(key) {
 const HISTORY_KEY = "appupload.history.v1";
 const REP_KEY = "appupload.rep";
 const MANAGER_KEY = "appupload.manager";
+// Sales agents shown in the rep dropdown (and seeded into the history rep filter).
+const AGENTS = [
+  "Jaden Dufek", "Sadie Scoville", "Timothy Constenius", "Gabriel Craft",
+  "Judah Steelman", "Justin Woodruff", "Adam Drexler", "Jason Coutcher",
+  "Lloyd Cruz", "Isaac Jenkins", "Jabe Schoenrock", "Max Alperstein",
+  "Seth Manshum", "Walter Smith",
+];
 let currentHistoryId = null;
 let HISTORY_BACKEND = "local"; // becomes 'supabase' when the server has a database configured
 
@@ -523,10 +530,37 @@ async function renderHistory() {
 
 const typeLabel = (e) => (e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—");
 
+// Build the top-of-page rep dropdown from the agent list, preserving any
+// previously-saved rep that isn't on the list (so a custom value still shows).
+function populateRepPicker() {
+  const sel = el("repInput");
+  if (!sel) return;
+  const cur = getCurrentRep();
+  sel.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "Select rep…";
+  sel.appendChild(blank);
+  AGENTS.forEach((name) => {
+    const o = document.createElement("option");
+    o.value = name;
+    o.textContent = name;
+    sel.appendChild(o);
+  });
+  if (cur && !AGENTS.includes(cur)) {
+    const o = document.createElement("option");
+    o.value = cur;
+    o.textContent = `${cur} (custom)`;
+    sel.appendChild(o);
+  }
+  sel.value = cur;
+}
+
 function populateRepFilter() {
   const sel = el("repFilter");
   if (!sel) return;
-  const reps = [...new Set(historyCache.map((e) => e.rep).filter(Boolean))].sort();
+  // Always include the known agents, plus any reps that already appear in history.
+  const reps = [...new Set([...AGENTS, ...historyCache.map((e) => e.rep).filter(Boolean)])].sort();
   const cur = sel.value;
   sel.innerHTML = "";
   const all = document.createElement("option");
@@ -1073,9 +1107,8 @@ function init() {
   el("historySearch").addEventListener("input", paintHistory);
   el("repFilter").addEventListener("change", paintHistory);
   el("exportAllBtn").addEventListener("click", exportAll);
-  const repInput = el("repInput");
-  repInput.value = getCurrentRep();
-  repInput.addEventListener("input", () => setCurrentRep(repInput.value.trim()));
+  populateRepPicker();
+  el("repInput").addEventListener("change", (e) => setCurrentRep(e.target.value));
   const managerInput = el("managerInput");
   managerInput.value = getCurrentManager();
   managerInput.addEventListener("input", () => {
