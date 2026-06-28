@@ -147,6 +147,8 @@ function setPath(obj, path, value) {
 }
 
 /* ---------------- review form schema ---------------- */
+// How each piece of equipment is being provided (coversheet equipment row).
+const ACQUISITION_OPTS = [["", "—"], ["free", "Free"], ["existing", "Existing"], ["po", "PO"], ["rental", "Rental"], ["lease", "Lease"]];
 const REVIEW_SECTIONS = [
   {
     title: "Business",
@@ -259,12 +261,16 @@ const REVIEW_SECTIONS = [
   { title: "Equipment", fields: [
     ["equipment.0.model", "Item 1 — choose equipment", "modelSelect"],
     ["equipment.0.quantity", "Qty"],
+    ["equipment.0.acquisition", "Type", "select", ACQUISITION_OPTS],
     ["equipment.1.model", "Item 2 — choose equipment", "modelSelect"],
     ["equipment.1.quantity", "Qty"],
+    ["equipment.1.acquisition", "Type", "select", ACQUISITION_OPTS],
     ["equipment.2.model", "Item 3 — choose equipment", "modelSelect"],
     ["equipment.2.quantity", "Qty"],
+    ["equipment.2.acquisition", "Type", "select", ACQUISITION_OPTS],
     ["equipment.3.model", "Item 4 — choose equipment", "modelSelect"],
     ["equipment.3.quantity", "Qty"],
+    ["equipment.3.acquisition", "Type", "select", ACQUISITION_OPTS],
   ]},
   { title: "Coversheet — set-up form", fields: [
     ["sales.salesAgentName", "Sales partner name"],
@@ -361,7 +367,7 @@ const FORM_SECTIONS = {
   citizens: APP_SECTIONS,
   merrick: APP_SECTIONS,
   application: APP_SECTIONS, // fallback alias
-  coversheet: ["Coversheet — set-up form", "Business", "Documents provided"],
+  coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
   clover: ["Business", "Signatures (printed name / title / date)"],
 };
@@ -377,7 +383,7 @@ const FORM_FIELDS = {
     "business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip",
   ],
   coversheet: [
-    "coversheet.", "documents.", "sales.salesAgentName", "transaction.seasonal",
+    "coversheet.", "documents.", "equipment.", "sales.salesAgentName", "transaction.seasonal",
     "business.dba", "business.email", "business.federalTaxId",
   ],
   clover: [
