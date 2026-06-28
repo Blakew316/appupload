@@ -263,6 +263,8 @@ const REVIEW_SECTIONS = [
     ["equipment.1.quantity", "Qty"],
     ["equipment.2.model", "Item 3 — choose equipment", "modelSelect"],
     ["equipment.2.quantity", "Qty"],
+    ["equipment.3.model", "Item 4 — choose equipment", "modelSelect"],
+    ["equipment.3.quantity", "Qty"],
   ]},
   { title: "Coversheet — set-up form", fields: [
     ["sales.salesAgentName", "Sales partner name"],
@@ -695,7 +697,7 @@ function blankRecord() {
   return {
     appType: "unknown", appTypeConfidence: "", documents: {},
     business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
-    serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}],
+    serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}, {}],
     coversheet: {}, po: {}, sales: {}, notes: "",
   };
 }
@@ -953,17 +955,18 @@ async function extractApplication() {
   }
 }
 
-// Download buttons: none highlighted until the user clicks one.
-function resetGenBtns() {
-  document.querySelectorAll(".gen-btn").forEach((b) => { b.classList.add("btn-secondary"); b.classList.remove("btn-primary"); });
+// Download picker: enable the button only when at least one document is checked.
+const dlChecks = () => [...document.querySelectorAll(".dl-check input")];
+function updateDlBtn() {
+  el("genSelectedBtn").disabled = dlChecks().filter((c) => c.checked).length === 0;
 }
-function selectGenBtn(btn) {
-  resetGenBtns();
-  if (btn) { btn.classList.add("btn-primary"); btn.classList.remove("btn-secondary"); }
+function resetDlChecks() {
+  dlChecks().forEach((c) => (c.checked = false));
+  updateDlBtn();
 }
 
 function showReview(record, detected = false) {
-  resetGenBtns();
+  resetDlChecks();
   applyManagerDefault(record);
   el("appTypeSelect").value = record.appType || "unknown";
   const badge = el("detectBadge");
@@ -983,11 +986,14 @@ function showReview(record, detected = false) {
   showSection("app", "review");
 }
 
-async function generate(kind) {
+async function generateSelected() {
+  const order = ["coversheet", "application", "po", "clover"];
+  const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
+  if (!kinds.length) return;
   collectReview();
   currentHistoryId = await historyUpsert(workingRecord, currentHistoryId);
   renderHistory();
-  const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kind };
+  const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kinds };
   try {
     const res = await fetch("/api/packet", {
       method: "POST",
@@ -999,7 +1005,8 @@ async function generate(kind) {
       throw new Error(err.error || "Could not generate PDF.");
     }
     const blob = await res.blob();
-    triggerDownload(blob, pdfFileName(workingRecord, kind));
+    // One doc -> its own name; several -> "<DBA> - Packet.pdf".
+    triggerDownload(blob, pdfFileName(workingRecord, kinds.length === 1 ? kinds[0] : "combined"));
   } catch (e) {
     showBanner("error", e.message);
   }
@@ -1168,11 +1175,8 @@ function init() {
 
   el("extractBtn").addEventListener("click", extractApplication);
   el("appClearBtn").addEventListener("click", () => appUploader.clear());
-  el("genPacketBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("combined"); });
-  el("genAppBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("application"); });
-  el("genCoverBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("coversheet"); });
-  el("genPoBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("po"); });
-  el("genCloverBtn").addEventListener("click", (e) => { selectGenBtn(e.currentTarget); generate("clover"); });
+  el("genSelectedBtn").addEventListener("click", generateSelected);
+  dlChecks().forEach((c) => c.addEventListener("change", updateDlBtn));
   el("jumpFormSelect").addEventListener("change", (e) => {
     const v = e.target.value;
     if (v === "citizens" || v === "merrick") {

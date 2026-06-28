@@ -130,13 +130,18 @@
 
           <div id="reviewForm"></div>
 
-          <div class="actions wrap generate-actions">
-            <button id="genPacketBtn" class="btn btn-secondary gen-btn">Download packet (coversheet + application)</button>
-            <button id="genAppBtn" class="btn btn-secondary gen-btn">Application only</button>
-            <button id="genCoverBtn" class="btn btn-secondary gen-btn">Coversheet only</button>
-            <button id="genPoBtn" class="btn btn-secondary gen-btn">Purchase order</button>
-            <button id="genCloverBtn" class="btn btn-secondary gen-btn">Clover addendum</button>
-            <button id="appRestartBtn" class="btn btn-ghost">Start over</button>
+          <div class="generate-actions">
+            <p class="dl-title">Choose the documents to download</p>
+            <div class="dl-picker">
+              <label class="dl-check"><input type="checkbox" id="dlCover" value="coversheet" /><span>Coversheet</span></label>
+              <label class="dl-check"><input type="checkbox" id="dlApp" value="application" /><span>Application (Citizens / Merrick)</span></label>
+              <label class="dl-check"><input type="checkbox" id="dlPo" value="po" /><span>Purchase order</span></label>
+              <label class="dl-check"><input type="checkbox" id="dlClover" value="clover" /><span>Clover addendum</span></label>
+            </div>
+            <div class="actions wrap">
+              <button id="genSelectedBtn" class="btn btn-primary" disabled>Download selected</button>
+              <button id="appRestartBtn" class="btn btn-ghost">Start over</button>
+            </div>
           </div>
         </section>
       </div>

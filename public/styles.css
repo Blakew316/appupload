@@ -383,6 +383,15 @@ main {
 .checkfield input { width: 16px; height: 16px; }
 
 .generate-actions { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 18px; }
+.dl-title { font-weight: 700; color: var(--ink); margin: 0 0 10px; font-size: 0.95rem; }
+.dl-picker { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.dl-check {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  font-size: 0.95rem; color: var(--ink); font-weight: 600;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc;
+}
+.dl-check:hover { border-color: var(--accent); background: var(--accent-soft); }
+.dl-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 
 /* Menu table */
 .table-wrap { overflow-x: auto; margin: 12px 0; }

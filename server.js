@@ -124,7 +124,7 @@ app.post("/api/extract", (req, res) => {
 // body: { record, form?, date?, kind: 'combined'|'application'|'coversheet' }
 app.post("/api/packet", async (req, res) => {
   try {
-    const { record: raw, form: formOverride, date, kind = "combined" } = req.body || {};
+    const { record: raw, form: formOverride, date, kind = "combined", kinds } = req.body || {};
     if (!raw || typeof raw !== "object") return res.status(400).json({ error: "Missing record." });
     const record = normalizeRecord(raw);
     const form = resolveForm(record, formOverride);
@@ -132,7 +132,26 @@ app.post("/api/packet", async (req, res) => {
 
     let bytes;
     let name;
-    if (kind === "coversheet") {
+    let labelOverride = null;
+    if (Array.isArray(kinds) && kinds.length) {
+      // Multi-select: build the chosen documents in a fixed order and merge into one PDF.
+      const order = ["coversheet", "application", "po", "clover"];
+      const chosen = order.filter((k) => kinds.includes(k));
+      const parts = [];
+      for (const k of chosen) {
+        if (k === "coversheet") parts.push(await fillForm("coversheet", base));
+        else if (k === "application") { if (form) parts.push(await fillForm(form, base)); }
+        else if (k === "po") parts.push(await fillForm("purchase_order", base));
+        else if (k === "clover") parts.push(await fillForm("clover_addendum", base));
+      }
+      if (!parts.length) {
+        return res.status(400).json({ error: "None of the selected documents could be generated. For the Application, choose Citizens or Merrick above." });
+      }
+      bytes = parts.length === 1 ? parts[0] : await mergePdfs(parts);
+      const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum" };
+      labelOverride = chosen.length === 1 ? labels[chosen[0]] : "Packet";
+      name = chosen.length === 1 ? chosen[0] : "packet";
+    } else if (kind === "coversheet") {
       bytes = await fillForm("coversheet", base);
       name = "coversheet";
     } else if (kind === "application") {
@@ -158,7 +177,7 @@ app.post("/api/packet", async (req, res) => {
     const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", combined: "Packet" };
     const dba = (record.business.dba || record.business.legalName || "").trim();
     const safeDba = dba.replace(/[\/\\:*?"<>|\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "Application";
-    const fileName = `${safeDba} - ${labels[kind] || name}.pdf`;
+    const fileName = `${safeDba} - ${labelOverride || labels[kind] || name}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.end(Buffer.from(bytes));
