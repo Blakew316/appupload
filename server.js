@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractFromImages, normalizeRecord } from "./lib/extract.js";
-import { buildPacket, fillForm, mergePdfs } from "./lib/fillForm.js";
+import { fillForm, mergePdfs, prepareRecord, resolveForm, hasCloverEquipment } from "./lib/fillForm.js";
 import { extractMenu, normalizeMenu, buildCloverWorkbook } from "./lib/menu.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -64,28 +64,30 @@ app.post("/api/packet", async (req, res) => {
     const { record: raw, form: formOverride, date, kind = "combined" } = req.body || {};
     if (!raw || typeof raw !== "object") return res.status(400).json({ error: "Missing record." });
     const record = normalizeRecord(raw);
-    const form =
-      formOverride && ["citizens", "merrick"].includes(formOverride)
-        ? formOverride
-        : record.appType === "merrick"
-        ? "merrick"
-        : record.appType === "citizens"
-        ? "citizens"
-        : null;
-
-    const { applicationPdf, coversheetPdf } = await buildPacket(record, { form, date });
+    const form = resolveForm(record, formOverride);
+    const base = prepareRecord(record, { date });
 
     let bytes;
     let name;
     if (kind === "coversheet") {
-      bytes = coversheetPdf;
+      bytes = await fillForm("coversheet", base);
       name = "coversheet";
     } else if (kind === "application") {
-      if (!applicationPdf) return res.status(400).json({ error: "Application type is unknown — pick Citizens or Merrick." });
-      bytes = applicationPdf;
+      if (!form) return res.status(400).json({ error: "Application type is unknown — pick Citizens or Merrick." });
+      bytes = await fillForm(form, base);
       name = `${form}-application`;
+    } else if (kind === "po") {
+      bytes = await fillForm("purchase_order", base);
+      name = "purchase-order";
+    } else if (kind === "clover") {
+      bytes = await fillForm("clover_addendum", base);
+      name = "clover-addendum";
     } else {
-      bytes = await mergePdfs([coversheetPdf, applicationPdf].filter(Boolean));
+      // combined packet: coversheet + application (+ Clover addendum when Clover equipment is present)
+      const parts = [await fillForm("coversheet", base)];
+      if (form) parts.push(await fillForm(form, base));
+      if (hasCloverEquipment(record)) parts.push(await fillForm("clover_addendum", base));
+      bytes = await mergePdfs(parts);
       name = `${form || "application"}-packet`;
     }
 

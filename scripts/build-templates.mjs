@@ -24,6 +24,8 @@ const FORMS = {
   citizens: "citizens.pdf",
   merrick: "merrick.pdf",
   coversheet: "coversheet.pdf",
+  purchase_order: "purchase_order.pdf",
+  clover_addendum: "clover_addendum.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });

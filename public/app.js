@@ -295,6 +295,19 @@ const REVIEW_SECTIONS = [
     ["coversheet.specialOther", "Special prompts — other"],
     ["coversheet.notes", "Notes & special instructions"],
   ]},
+  { title: "Purchase order (optional)", fields: [
+    ["po.mid", "Merchant MID"],
+    ["po.team", "Team (defaults to team color)"],
+    ["po.salesManager", "Sales manager (defaults to territory mgr)"],
+    ["po.billTo", "Equipment bill to (defaults Merchant)"],
+    ["po.shipTo", "Ship to", "select", [["", "—"], ["dba", "Merchant DBA"], ["rep", "Sales Rep"], ["other", "Other"]]],
+    ["po.shippingMethod", "Shipping method", "select", [["", "—"], ["ground", "Ground (Free)"], ["2day", "2 Day"], ["overnight", "Overnight"]]],
+    ["po.payPlan", "Pay plan", "select", [["", "—"], ["3pay", "3 Pay"], ["4pay", "4 Pay"]]],
+    ["po.billingType", "Billing", "select", [["", "—"], ["ach", "ACH (voided check)"], ["cc", "Credit Card"]]],
+    ["po.shCost", "S&H cost ($)"],
+    ["po.salesTax", "Sales tax ($)"],
+    ["po.frontendPlatform", "Clover frontend platform", "select", [["", "—"], ["omaha", "Omaha"], ["nashville", "Nashville"]]],
+  ]},
 ];
 
 const OWNER_FIELDS = [
@@ -661,6 +674,8 @@ function init() {
   el("genPacketBtn").addEventListener("click", () => generate("combined"));
   el("genAppBtn").addEventListener("click", () => generate("application"));
   el("genCoverBtn").addEventListener("click", () => generate("coversheet"));
+  el("genPoBtn").addEventListener("click", () => generate("po"));
+  el("genCloverBtn").addEventListener("click", () => generate("clover"));
   el("appRestartBtn").addEventListener("click", () => {
     appUploader.clear();
     showSection("app", "upload");
