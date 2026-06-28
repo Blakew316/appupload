@@ -23,6 +23,10 @@
 
       <!-- ============ APPLICATION MODE ============ -->
       <div id="appMode">
+        <div class="rep-bar">
+          <label>Sales rep <input id="repInput" type="text" placeholder="your name — tags new submissions" /></label>
+        </div>
+
         <!-- Step 1: upload -->
         <section id="appUpload" class="card">
           <div class="upload-head">
@@ -69,7 +73,6 @@
             <select id="repFilter" class="rep-filter" aria-label="Filter by rep">
               <option value="">All reps</option>
             </select>
-            <label class="rep-set">Your name <input id="repInput" type="text" placeholder="tags new ones" /></label>
           </div>
           <ul id="historyList" class="history-list"></ul>
         </section>

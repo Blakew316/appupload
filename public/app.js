@@ -246,15 +246,12 @@ const REVIEW_SECTIONS = [
     ["signatures.date2", "Signer 2 date"],
   ]},
   { title: "Equipment", fields: [
-    ["equipment.0.model", "Item 1 model", "model"],
-    ["equipment.0.type", "Item 1 type"],
-    ["equipment.0.quantity", "Item 1 qty"],
-    ["equipment.1.model", "Item 2 model", "model"],
-    ["equipment.1.type", "Item 2 type"],
-    ["equipment.1.quantity", "Item 2 qty"],
-    ["equipment.2.model", "Item 3 model", "model"],
-    ["equipment.2.type", "Item 3 type"],
-    ["equipment.2.quantity", "Item 3 qty"],
+    ["equipment.0.model", "Item 1 — choose equipment", "modelSelect"],
+    ["equipment.0.quantity", "Qty"],
+    ["equipment.1.model", "Item 2 — choose equipment", "modelSelect"],
+    ["equipment.1.quantity", "Qty"],
+    ["equipment.2.model", "Item 3 — choose equipment", "modelSelect"],
+    ["equipment.2.quantity", "Qty"],
   ]},
   { title: "Coversheet — set-up form", fields: [
     ["sales.salesAgentName", "Sales partner name"],
@@ -343,10 +340,10 @@ function buildEquipmentDatalist() {
   });
 }
 
-// Which review sections matter for each form, so picking a form reveals just those fields.
+// Which review sections matter for each form, so picking a form shows only those fields.
 const FORM_SECTIONS = {
-  application: ["Business", "Owner / Principal 1", "Owner / Principal 2", "Banking (from voided check)", "Transaction", "Fees — authorization / monthly / misc", "Service acceptance & fee schedule", "Signatures (printed name / title / date)"],
-  coversheet: ["Coversheet — set-up form", "Business"],
+  application: ["Business", "Owner / Principal 1", "Owner / Principal 2", "Banking (from voided check)", "Transaction", "Fees — authorization / monthly / misc", "Service acceptance & fee schedule", "Signatures (printed name / title / date)", "Documents provided"],
+  coversheet: ["Coversheet — set-up form", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
   clover: ["Business", "Signatures (printed name / title / date)"],
 };
@@ -355,13 +352,18 @@ function focusForm(key) {
   const sections = [...document.querySelectorAll("#reviewForm > details.review-section")];
   const wanted = FORM_SECTIONS[key];
   if (!wanted) {
-    sections.forEach((d, i) => (d.open = i === 0));
+    // "All sections" — show everything, open the first.
+    sections.forEach((d, i) => {
+      d.classList.remove("section-off");
+      d.open = i === 0;
+    });
     return;
   }
   let first = null;
   sections.forEach((d) => {
     const title = d.querySelector("summary")?.textContent || "";
     const match = wanted.includes(title);
+    d.classList.toggle("section-off", !match); // hide sections this form doesn't use
     d.open = match;
     if (match && !first) first = d;
   });
@@ -632,6 +634,51 @@ function renderReviewForm(record) {
       span.textContent = label;
       lab.appendChild(span);
       return lab;
+    }
+    if (type === "modelSelect") {
+      const wrap = document.createElement("label");
+      wrap.className = "field field-wide" + (value ? "" : " empty");
+      const span = document.createElement("span");
+      span.textContent = label;
+      wrap.appendChild(span);
+      const sel = document.createElement("select");
+      sel.dataset.path = path;
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "— none —";
+      sel.appendChild(blank);
+      const groups = {};
+      EQUIPMENT_MODELS.forEach((m) => (groups[m.category] = groups[m.category] || []).push(m));
+      Object.keys(groups).sort().forEach((cat) => {
+        const og = document.createElement("optgroup");
+        og.label = cat;
+        groups[cat].forEach((m) => {
+          const o = document.createElement("option");
+          o.value = m.model;
+          o.textContent = `${m.model} — $${m.price}`;
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      if (value && ![...sel.options].some((o) => o.value === value)) {
+        const o = document.createElement("option");
+        o.value = value;
+        o.textContent = value;
+        sel.insertBefore(o, blank.nextSibling);
+      }
+      sel.value = value || "";
+      const hint = document.createElement("span");
+      hint.className = "price-hint";
+      const sync = () => {
+        wrap.classList.toggle("empty", sel.value === "");
+        const m = EQUIPMENT_MODELS.find((x) => x.model === sel.value);
+        hint.textContent = m ? `${m.category} · $${m.price}` : "";
+      };
+      sel.addEventListener("change", sync);
+      wrap.appendChild(sel);
+      wrap.appendChild(hint);
+      sync();
+      return wrap;
     }
     const wrap = document.createElement("label");
     const isEmpty = value === "" || value == null;
@@ -1033,6 +1080,13 @@ function init() {
     .then((d) => {
       EQUIPMENT_MODELS = d.models || [];
       buildEquipmentDatalist();
+      // If a review form is already on screen (e.g. models loaded late), rebuild it
+      // so the equipment dropdowns populate — preserving any edits already made.
+      if (workingRecord && !el("appReview").classList.contains("hidden")) {
+        collectReview();
+        renderReviewForm(workingRecord);
+        focusForm(el("jumpFormSelect").value);
+      }
     })
     .catch(() => {});
 }
