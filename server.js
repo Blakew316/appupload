@@ -152,9 +152,13 @@ app.post("/api/packet", async (req, res) => {
       name = `${form || "application"}-packet`;
     }
 
-    const safe = (record.business.dba || name).replace(/[^a-z0-9-_]+/gi, "_").slice(0, 50);
+    // Lead the file name with the Doing-Business-As name so it's auto-labeled for easy finding.
+    const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", combined: "Packet" };
+    const dba = (record.business.dba || record.business.legalName || "").trim();
+    const safeDba = dba.replace(/[\/\\:*?"<>|\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "Application";
+    const fileName = `${safeDba} - ${labels[kind] || name}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${safe}-${name}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.end(Buffer.from(bytes));
   } catch (e) {
     console.error("Packet generation failed:", e.message);

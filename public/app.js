@@ -373,6 +373,7 @@ function focusForm(key) {
 /* ---------------- submission history (browser-only) ---------------- */
 const HISTORY_KEY = "appupload.history.v1";
 const REP_KEY = "appupload.rep";
+const MANAGER_KEY = "appupload.manager";
 let currentHistoryId = null;
 let HISTORY_BACKEND = "local"; // becomes 'supabase' when the server has a database configured
 
@@ -389,6 +390,28 @@ function setCurrentRep(v) {
   } catch {}
 }
 const repFor = (record) => getCurrentRep() || (record && record.sales && record.sales.salesAgentName) || "";
+
+function getCurrentManager() {
+  try {
+    return localStorage.getItem(MANAGER_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function setCurrentManager(v) {
+  try {
+    localStorage.setItem(MANAGER_KEY, v);
+  } catch {}
+}
+// The manager name (the person running this) defaults the coversheet territory
+// manager, which in turn defaults the purchase order's sales manager. Only fills
+// when the record hasn't already specified one, so it never clobbers real data.
+function applyManagerDefault(record) {
+  const mgr = getCurrentManager();
+  if (!mgr || !record) return;
+  record.coversheet = record.coversheet || {};
+  if (!record.coversheet.territoryManager) record.coversheet.territoryManager = mgr;
+}
 
 function downloadJson(obj, filename) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
@@ -816,6 +839,7 @@ function collectReview() {
       setPath(workingRecord, path, value);
     });
   workingRecord.appType = el("appTypeSelect").value;
+  applyManagerDefault(workingRecord); // ensure generated PDFs carry the manager even if the section was never opened
 }
 
 /* ---------------- application flow ---------------- */
@@ -841,6 +865,7 @@ async function extractApplication() {
 }
 
 function showReview(record) {
+  applyManagerDefault(record);
   el("appTypeSelect").value = record.appType || "unknown";
   const badge = el("detectBadge");
   const type = record.appType || "unknown";
@@ -868,8 +893,7 @@ async function generate(kind) {
       throw new Error(err.error || "Could not generate PDF.");
     }
     const blob = await res.blob();
-    const name = (workingRecord.business?.dba || "application").replace(/[^a-z0-9-_]+/gi, "_").slice(0, 50);
-    triggerDownload(blob, `${name}-${kind}.pdf`);
+    triggerDownload(blob, pdfFileName(workingRecord, kind));
   } catch (e) {
     showBanner("error", e.message);
   }
@@ -944,6 +968,17 @@ async function downloadXlsx() {
 function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
+// Human-readable form labels used in downloaded file names.
+const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum" };
+// Lead the file name with the Doing-Business-As name so downloads are auto-labeled
+// and easy to find. Falls back to legal name, then a generic label.
+function pdfFileName(record, kind) {
+  const dba = ((record && record.business && (record.business.dba || record.business.legalName)) || "").trim();
+  const safe = dba.replace(/[\/\\:*?"<>|\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  const label = FORM_LABELS[kind] || "Document";
+  return `${safe || "Application"} - ${label}.pdf`;
+}
+
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1041,6 +1076,18 @@ function init() {
   const repInput = el("repInput");
   repInput.value = getCurrentRep();
   repInput.addEventListener("input", () => setCurrentRep(repInput.value.trim()));
+  const managerInput = el("managerInput");
+  managerInput.value = getCurrentManager();
+  managerInput.addEventListener("input", () => {
+    const v = managerInput.value.trim();
+    setCurrentManager(v);
+    // If the review form is open and territory manager is still blank, fill it live.
+    const tm = document.querySelector('#reviewForm [data-path="coversheet.territoryManager"]');
+    if (tm && !tm.value) {
+      tm.value = v;
+      tm.dispatchEvent(new Event("input"));
+    }
+  });
   el("clearHistoryBtn").addEventListener("click", async () => {
     if (!confirm("Clear all saved submissions?")) return;
     if (HISTORY_BACKEND === "supabase") {
