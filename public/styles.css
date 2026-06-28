@@ -377,6 +377,10 @@ main {
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: var(--ink-soft); }
 .field-wide { grid-column: 1 / -1; } /* equipment model dropdown spans the full row */
+/* Equipment picker: a custom text field stacked above the matrix dropdown. */
+.equip-field { gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc; }
+.equip-sub { display: flex; flex-direction: column; gap: 4px; }
+.equip-sub > span { font-weight: 600; font-size: 0.82rem; color: var(--ink-soft); }
 .field > span { font-weight: 600; }
 .field input, .field select {
   border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;

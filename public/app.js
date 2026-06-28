@@ -751,33 +751,80 @@ function renderReviewForm(record) {
       return lab;
     }
     if (type === "modelSelect") {
-      // Combobox: type to search the pricing matrix, or type any custom equipment
-      // the merchant is requesting that isn't on the list.
-      const wrap = document.createElement("label");
-      wrap.className = "field field-wide" + (value ? "" : " empty");
+      const wrap = document.createElement("div");
+      wrap.className = "field field-wide equip-field" + (value ? "" : " empty");
+
+      // Canonical value read by collectReview; custom text overrides the dropdown.
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.dataset.path = path;
+      wrap.appendChild(hidden);
+
+      // 1) Custom equipment text field (above) — for anything not on the pricing list.
+      const customLab = document.createElement("label");
+      customLab.className = "equip-sub";
+      const cspan = document.createElement("span");
+      cspan.textContent = "Custom equipment (type if not listed)";
+      customLab.appendChild(cspan);
+      const custom = document.createElement("input");
+      custom.type = "text";
+      custom.placeholder = "Type whatever the merchant is requesting…";
+      customLab.appendChild(custom);
+      wrap.appendChild(customLab);
+
+      // 2) Equipment dropdown (below) — the pricing matrix list.
+      const selLab = document.createElement("label");
+      selLab.className = "equip-sub";
       const span = document.createElement("span");
       span.textContent = label;
-      wrap.appendChild(span);
-      const inp = document.createElement("input");
-      inp.type = "text";
-      inp.dataset.path = path;
-      inp.setAttribute("list", "equipmentModels");
-      inp.setAttribute("autocomplete", "off");
-      inp.placeholder = "Choose from the list or type custom equipment…";
-      inp.value = value || "";
+      selLab.appendChild(span);
+      const sel = document.createElement("select");
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "— none —";
+      sel.appendChild(blank);
+      const groups = {};
+      EQUIPMENT_MODELS.forEach((m) => (groups[m.category] = groups[m.category] || []).push(m));
+      Object.keys(groups).sort().forEach((cat) => {
+        const og = document.createElement("optgroup");
+        og.label = cat;
+        groups[cat].forEach((m) => {
+          const o = document.createElement("option");
+          o.value = m.model;
+          o.textContent = `${m.model} — $${m.price}`;
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      selLab.appendChild(sel);
       const hint = document.createElement("span");
       hint.className = "price-hint";
-      const sync = () => {
-        const v = inp.value.trim();
-        wrap.classList.toggle("empty", v === "");
+      selLab.appendChild(hint);
+      wrap.appendChild(selLab);
+
+      // Seed initial state: a known model fills the dropdown; anything else is custom.
+      const known = value && EQUIPMENT_MODELS.some((m) => m.model === value);
+      sel.value = known ? value : "";
+      if (value && !known) custom.value = value;
+      hidden.value = value || "";
+
+      const refreshHint = () => {
+        const v = hidden.value.trim();
         const m = EQUIPMENT_MODELS.find((x) => x.model.toLowerCase() === v.toLowerCase());
         hint.textContent = m ? `${m.category} · $${m.price}` : (v ? "Custom item — no preset price" : "");
+        wrap.classList.toggle("empty", v === "");
       };
-      inp.addEventListener("input", sync);
-      inp.addEventListener("change", sync);
-      wrap.appendChild(inp);
-      wrap.appendChild(hint);
-      sync();
+      custom.addEventListener("input", () => {
+        const c = custom.value.trim();
+        hidden.value = c || sel.value; // typed custom wins; cleared falls back to the dropdown
+        refreshHint();
+      });
+      sel.addEventListener("change", () => {
+        custom.value = ""; // picking from the list clears any custom text
+        hidden.value = sel.value;
+        refreshHint();
+      });
+      refreshHint();
       return wrap;
     }
     const wrap = document.createElement("label");
