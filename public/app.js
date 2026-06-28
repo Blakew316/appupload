@@ -368,6 +368,105 @@ function focusForm(key) {
   if (first) first.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* ---------------- submission history (browser-only) ---------------- */
+const HISTORY_KEY = "appupload.history.v1";
+let currentHistoryId = null;
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+function saveHistoryList(list) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 50)));
+  } catch {}
+}
+function upsertHistory(record, id) {
+  const list = loadHistory();
+  const entry = {
+    id: id || "h" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    savedAt: Date.now(),
+    dba: (record.business && (record.business.dba || record.business.legalName)) || "(unnamed)",
+    appType: record.appType || "unknown",
+    record,
+  };
+  const idx = list.findIndex((e) => e.id === entry.id);
+  if (idx >= 0) list[idx] = entry;
+  else list.unshift(entry);
+  saveHistoryList(list);
+  return entry.id;
+}
+function renderHistory() {
+  const list = loadHistory();
+  const panel = el("historyPanel");
+  const ul = el("historyList");
+  if (!panel || !ul) return;
+  panel.classList.toggle("hidden", list.length === 0);
+  ul.innerHTML = "";
+  list.forEach((e) => {
+    const li = document.createElement("li");
+    li.className = "history-item";
+    const d = new Date(e.savedAt);
+    const type = e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—";
+    const when = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    const open = document.createElement("button");
+    open.type = "button";
+    open.className = "history-open";
+    open.innerHTML = `<strong></strong><span class="history-meta"></span>`;
+    open.querySelector("strong").textContent = e.dba;
+    open.querySelector(".history-meta").textContent = `${type} · ${when}`;
+    open.addEventListener("click", () => resumeHistory(e.id));
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "history-del";
+    del.title = "Remove";
+    del.textContent = "×";
+    del.addEventListener("click", () => {
+      saveHistoryList(loadHistory().filter((x) => x.id !== e.id));
+      renderHistory();
+    });
+    li.appendChild(open);
+    li.appendChild(del);
+    ul.appendChild(li);
+  });
+}
+function resumeHistory(id) {
+  const e = loadHistory().find((x) => x.id === id);
+  if (!e) return;
+  workingRecord = e.record;
+  currentHistoryId = id;
+  switchMode("app");
+  showReview(workingRecord);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function blankRecord() {
+  return {
+    appType: "unknown", appTypeConfidence: "", documents: {},
+    business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
+    serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}],
+    coversheet: {}, po: {}, sales: {}, notes: "",
+  };
+}
+
+/** Home-page picker: open the review form (blank if nothing uploaded) focused on one form. */
+function startBlankForm(key) {
+  if (!key) return;
+  if (!workingRecord) {
+    workingRecord = blankRecord();
+    currentHistoryId = null;
+  }
+  showReview(workingRecord);
+  focusForm(key);
+  const js = el("jumpFormSelect");
+  if (js) js.value = ["application", "coversheet", "po", "clover"].includes(key) ? key : "";
+  const hs = el("homeFormSelect");
+  if (hs) hs.value = "";
+}
+
 function renderReviewForm(record) {
   const container = el("reviewForm");
   container.innerHTML = "";
@@ -544,6 +643,8 @@ async function extractApplication() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Extraction failed (${res.status}).`);
     workingRecord = data.record;
+    currentHistoryId = upsertHistory(workingRecord);
+    renderHistory();
     showReview(workingRecord);
   } catch (e) {
     showSection("app", "upload");
@@ -565,6 +666,8 @@ function showReview(record) {
 
 async function generate(kind) {
   collectReview();
+  currentHistoryId = upsertHistory(workingRecord, currentHistoryId);
+  renderHistory();
   const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kind };
   try {
     const res = await fetch("/api/packet", {
@@ -732,8 +835,17 @@ function init() {
   el("genPoBtn").addEventListener("click", () => generate("po"));
   el("genCloverBtn").addEventListener("click", () => generate("clover"));
   el("jumpFormSelect").addEventListener("change", (e) => focusForm(e.target.value));
+  el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
+  el("clearHistoryBtn").addEventListener("click", () => {
+    if (confirm("Clear all saved submissions from this browser?")) {
+      saveHistoryList([]);
+      renderHistory();
+    }
+  });
   el("appRestartBtn").addEventListener("click", () => {
     appUploader.clear();
+    workingRecord = null;
+    currentHistoryId = null;
     showSection("app", "upload");
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
@@ -753,6 +865,7 @@ function init() {
   });
 
   checkHealth();
+  renderHistory();
   fetch("/api/equipment")
     .then((r) => r.json())
     .then((d) => {

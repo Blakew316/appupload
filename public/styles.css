@@ -273,6 +273,31 @@ main {
 }
 .mode-tab.active { background: var(--card); color: var(--accent-dark); box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
 
+/* Upload-screen header (title + manual form picker) */
+.upload-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.upload-head .step-title { margin: 0; }
+
+/* Submission history */
+.history { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 16px; }
+.history-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.history-head h3 { margin: 0; font-size: 1rem; }
+.history-note { margin: 4px 0 10px; }
+.history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.history-item { display: flex; align-items: stretch; gap: 6px; }
+.history-open {
+  flex: 1; text-align: left; cursor: pointer; font: inherit;
+  background: #fafbfc; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.history-open:hover { background: var(--accent-soft); border-color: var(--accent); }
+.history-open strong { color: var(--accent-dark); font-size: 0.95rem; }
+.history-meta { color: var(--ink-soft); font-size: 0.8rem; }
+.history-del {
+  width: 38px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  color: var(--ink-soft); font-size: 1.2rem; cursor: pointer;
+}
+.history-del:hover { background: #fbe6e0; color: var(--danger); border-color: #f0c4b8; }
+
 /* Review header right column */
 .head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .jump-form { display: flex; flex-direction: column; gap: 4px; font-size: 0.76rem; font-weight: 600; color: var(--ink-soft); align-items: flex-end; }

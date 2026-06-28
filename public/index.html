@@ -25,7 +25,19 @@
       <div id="appMode">
         <!-- Step 1: upload -->
         <section id="appUpload" class="card">
-          <h2 class="step-title"><span class="step-num">1</span> Upload the application &amp; supporting documents</h2>
+          <div class="upload-head">
+            <h2 class="step-title"><span class="step-num">1</span> Upload the application &amp; supporting documents</h2>
+            <label class="jump-form">
+              <span>Or fill a form manually</span>
+              <select id="homeFormSelect">
+                <option value="">Choose a form…</option>
+                <option value="application">Application (Citizens / Merrick)</option>
+                <option value="coversheet">Required Set-Up coversheet</option>
+                <option value="po">Purchase Order</option>
+                <option value="clover">Clover Addendum</option>
+              </select>
+            </label>
+          </div>
           <div id="appDropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload images">
             <input id="appFileInput" type="file" accept="image/*" multiple capture="environment" hidden />
             <div class="dropzone-inner">
@@ -39,6 +51,15 @@
           <div class="actions">
             <button id="extractBtn" class="btn btn-primary" disabled>Read &amp; detect</button>
             <button id="appClearBtn" class="btn btn-ghost hidden">Clear all</button>
+          </div>
+
+          <div id="historyPanel" class="history hidden">
+            <div class="history-head">
+              <h3>Recent submissions</h3>
+              <button id="clearHistoryBtn" type="button" class="link-btn">Clear history</button>
+            </div>
+            <p class="muted small history-note">Saved only in this browser (extracted data only — no photos). Click one to reopen and fill more forms.</p>
+            <ul id="historyList" class="history-list"></ul>
           </div>
         </section>
 
