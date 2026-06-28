@@ -52,15 +52,17 @@
             <button id="extractBtn" class="btn btn-primary" disabled>Read &amp; detect</button>
             <button id="appClearBtn" class="btn btn-ghost hidden">Clear all</button>
           </div>
+        </section>
 
-          <div id="historyPanel" class="history hidden">
-            <div class="history-head">
-              <h3>Recent submissions</h3>
-              <button id="clearHistoryBtn" type="button" class="link-btn">Clear history</button>
-            </div>
-            <p class="muted small history-note">Saved only in this browser (extracted data only — no photos). Click one to reopen and fill more forms.</p>
-            <ul id="historyList" class="history-list"></ul>
+        <!-- Past uploads & downloads -->
+        <section id="historySection" class="card hidden">
+          <div class="history-head">
+            <h2 class="step-title" style="margin:0"><span class="step-num">★</span> Past uploads &amp; downloads</h2>
+            <button id="clearHistoryBtn" type="button" class="link-btn">Clear history</button>
           </div>
+          <p id="historyNote" class="muted small history-note">Click one to reopen and fill more forms.</p>
+          <input id="historySearch" type="search" class="history-search" placeholder="Search by business name or form type…" aria-label="Search past submissions" />
+          <ul id="historyList" class="history-list"></ul>
         </section>
 
         <!-- Step 2: processing -->

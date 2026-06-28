@@ -282,6 +282,13 @@ main {
 .history-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .history-head h3 { margin: 0; font-size: 1rem; }
 .history-note { margin: 4px 0 10px; }
+.history-search {
+  width: 100%; box-sizing: border-box; margin: 0 0 12px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  font: inherit; font-size: 0.95rem; background: #fafbfc;
+}
+.history-search:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.history-empty { color: var(--ink-soft); font-size: 0.9rem; padding: 8px 2px; list-style: none; }
 .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .history-item { display: flex; align-items: stretch; gap: 6px; }
 .history-open {

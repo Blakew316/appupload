@@ -371,6 +371,55 @@ function focusForm(key) {
 /* ---------------- submission history (browser-only) ---------------- */
 const HISTORY_KEY = "appupload.history.v1";
 let currentHistoryId = null;
+let HISTORY_BACKEND = "local"; // becomes 'supabase' when the server has a database configured
+
+async function historyList() {
+  if (HISTORY_BACKEND === "supabase") {
+    try {
+      const d = await (await fetch("/api/history")).json();
+      return d.items || [];
+    } catch {
+      return [];
+    }
+  }
+  return loadHistory();
+}
+async function historyGet(id) {
+  if (HISTORY_BACKEND === "supabase") {
+    try {
+      const r = await fetch(`/api/history/${id}`);
+      return r.ok ? (await r.json()).record : null;
+    } catch {
+      return null;
+    }
+  }
+  return (loadHistory().find((x) => x.id === id) || {}).record || null;
+}
+async function historyUpsert(record, id) {
+  const dba = (record.business && (record.business.dba || record.business.legalName)) || "(unnamed)";
+  if (HISTORY_BACKEND === "supabase") {
+    try {
+      const r = await fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, dba, appType: record.appType || "unknown", data: record }),
+      });
+      return (await r.json().catch(() => ({}))).id || id;
+    } catch {
+      return id;
+    }
+  }
+  return upsertHistory(record, id);
+}
+async function historyDelete(id) {
+  if (HISTORY_BACKEND === "supabase") {
+    try {
+      await fetch(`/api/history/${id}`, { method: "DELETE" });
+    } catch {}
+    return;
+  }
+  saveHistoryList(loadHistory().filter((x) => x.id !== id));
+}
 
 function loadHistory() {
   try {
@@ -399,44 +448,67 @@ function upsertHistory(record, id) {
   saveHistoryList(list);
   return entry.id;
 }
-function renderHistory() {
-  const list = loadHistory();
-  const panel = el("historyPanel");
+let historyCache = [];
+
+async function renderHistory() {
+  historyCache = await historyList();
+  paintHistory();
+}
+
+const typeLabel = (e) => (e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—");
+
+function paintHistory() {
   const ul = el("historyList");
-  if (!panel || !ul) return;
-  panel.classList.toggle("hidden", list.length === 0);
+  if (!ul) return;
+  const q = (el("historySearch")?.value || "").trim().toLowerCase();
+  const list = q
+    ? historyCache.filter((e) => `${e.dba || ""} ${typeLabel(e)}`.toLowerCase().includes(q))
+    : historyCache;
+
   ul.innerHTML = "";
+  if (list.length === 0) {
+    const li = document.createElement("li");
+    li.className = "history-empty";
+    li.textContent = q ? "No matches." : "No saved submissions yet.";
+    ul.appendChild(li);
+  }
   list.forEach((e) => {
     const li = document.createElement("li");
     li.className = "history-item";
     const d = new Date(e.savedAt);
-    const type = e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—";
     const when = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
     const open = document.createElement("button");
     open.type = "button";
     open.className = "history-open";
     open.innerHTML = `<strong></strong><span class="history-meta"></span>`;
     open.querySelector("strong").textContent = e.dba;
-    open.querySelector(".history-meta").textContent = `${type} · ${when}`;
+    open.querySelector(".history-meta").textContent = `${typeLabel(e)} · ${when}`;
     open.addEventListener("click", () => resumeHistory(e.id));
     const del = document.createElement("button");
     del.type = "button";
     del.className = "history-del";
     del.title = "Remove";
     del.textContent = "×";
-    del.addEventListener("click", () => {
-      saveHistoryList(loadHistory().filter((x) => x.id !== e.id));
+    del.addEventListener("click", async () => {
+      await historyDelete(e.id);
       renderHistory();
     });
     li.appendChild(open);
     li.appendChild(del);
     ul.appendChild(li);
   });
+  updateHistoryVisibility();
 }
-function resumeHistory(id) {
-  const e = loadHistory().find((x) => x.id === id);
-  if (!e) return;
-  workingRecord = e.record;
+
+let appView = "upload";
+function updateHistoryVisibility() {
+  const sec = el("historySection");
+  if (sec) sec.classList.toggle("hidden", !(appView === "upload" && historyCache.length > 0));
+}
+async function resumeHistory(id) {
+  const record = await historyGet(id);
+  if (!record) return;
+  workingRecord = record;
   currentHistoryId = id;
   switchMode("app");
   showReview(workingRecord);
@@ -643,7 +715,7 @@ async function extractApplication() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Extraction failed (${res.status}).`);
     workingRecord = data.record;
-    currentHistoryId = upsertHistory(workingRecord);
+    currentHistoryId = await historyUpsert(workingRecord);
     renderHistory();
     showReview(workingRecord);
   } catch (e) {
@@ -666,7 +738,7 @@ function showReview(record) {
 
 async function generate(kind) {
   collectReview();
-  currentHistoryId = upsertHistory(workingRecord, currentHistoryId);
+  currentHistoryId = await historyUpsert(workingRecord, currentHistoryId);
   renderHistory();
   const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kind };
   try {
@@ -769,9 +841,11 @@ function triggerDownload(blob, filename) {
 
 function showSection(mode, which) {
   if (mode === "app") {
+    appView = which;
     el("appUpload").classList.toggle("hidden", which !== "upload");
     el("appProcessing").classList.toggle("hidden", which !== "processing");
     el("appReview").classList.toggle("hidden", which !== "review");
+    updateHistoryVisibility();
   } else {
     el("menuUpload").classList.toggle("hidden", which !== "upload");
     el("menuProcessing").classList.toggle("hidden", which !== "processing");
@@ -797,6 +871,15 @@ async function checkHealth() {
     el("modelInfo").textContent = data.mock ? "Running in demo mode." : `Powered by ${data.model}.`;
     if (!data.ready) showBanner("warn", "Not configured: set ANTHROPIC_API_KEY on the server (or TRANSCRIBE_MOCK=1 for a demo).");
     else if (data.mock) showBanner("info", "Demo mode: uploads return sample data so you can preview the workflow.");
+    HISTORY_BACKEND = data.historyBackend || "local";
+    const note = el("historyNote");
+    if (note) {
+      note.textContent =
+        HISTORY_BACKEND === "supabase"
+          ? "Shared across your team's devices. Click one to reopen and fill more forms."
+          : "Saved only in this browser (extracted data only — no photos). Click one to reopen and fill more forms.";
+    }
+    renderHistory();
   } catch {}
 }
 
@@ -836,11 +919,16 @@ function init() {
   el("genCloverBtn").addEventListener("click", () => generate("clover"));
   el("jumpFormSelect").addEventListener("change", (e) => focusForm(e.target.value));
   el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
-  el("clearHistoryBtn").addEventListener("click", () => {
-    if (confirm("Clear all saved submissions from this browser?")) {
+  el("historySearch").addEventListener("input", paintHistory);
+  el("clearHistoryBtn").addEventListener("click", async () => {
+    if (!confirm("Clear all saved submissions?")) return;
+    if (HISTORY_BACKEND === "supabase") {
+      const items = await historyList();
+      await Promise.all(items.map((e) => historyDelete(e.id)));
+    } else {
       saveHistoryList([]);
-      renderHistory();
     }
+    renderHistory();
   });
   el("appRestartBtn").addEventListener("click", () => {
     appUploader.clear();

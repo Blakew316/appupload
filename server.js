@@ -7,6 +7,7 @@ import { extractFromImages, normalizeRecord } from "./lib/extract.js";
 import { fillForm, mergePdfs, prepareRecord, resolveForm, hasCloverEquipment } from "./lib/fillForm.js";
 import { extractMenu, normalizeMenu, buildCloverWorkbook } from "./lib/menu.js";
 import { MODELS } from "./lib/pricing.js";
+import { dbEnabled, listSubmissions, getSubmission, upsertSubmission, deleteSubmission } from "./lib/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -36,11 +37,57 @@ app.get("/api/health", (_req, res) => {
     ready: Boolean(process.env.ANTHROPIC_API_KEY) || process.env.TRANSCRIBE_MOCK === "1",
     mock: process.env.TRANSCRIBE_MOCK === "1",
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
+    historyBackend: dbEnabled ? "supabase" : "local",
   });
 });
 
 // Equipment model list (from the pricing matrix) for the PO equipment dropdown.
 app.get("/api/equipment", (_req, res) => res.json({ models: MODELS }));
+
+/* ---------- Submission history (Supabase, shared across devices) ---------- */
+app.get("/api/history", async (_req, res) => {
+  if (!dbEnabled) return res.json({ backend: "local", items: [] });
+  try {
+    res.json({ backend: "supabase", items: await listSubmissions() });
+  } catch (e) {
+    console.error("History list failed:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/history/:id", async (req, res) => {
+  if (!dbEnabled) return res.status(404).json({ error: "History backend not configured." });
+  try {
+    const record = await getSubmission(req.params.id);
+    if (!record) return res.status(404).json({ error: "Not found." });
+    res.json({ record });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/history", async (req, res) => {
+  if (!dbEnabled) return res.status(503).json({ error: "History backend not configured." });
+  try {
+    const { id, dba, appType, data } = req.body || {};
+    if (!data || typeof data !== "object") return res.status(400).json({ error: "Missing data." });
+    const savedId = await upsertSubmission({ id, dba, appType, data });
+    res.json({ id: savedId });
+  } catch (e) {
+    console.error("History save failed:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete("/api/history/:id", async (req, res) => {
+  if (!dbEnabled) return res.status(503).json({ error: "History backend not configured." });
+  try {
+    await deleteSubmission(req.params.id);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 /* ---------- Merchant application: extract + fill ---------- */
 
