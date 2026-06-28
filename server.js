@@ -7,7 +7,7 @@ import { extractFromImages, normalizeRecord } from "./lib/extract.js";
 import { fillForm, mergePdfs, prepareRecord, resolveForm, hasCloverEquipment } from "./lib/fillForm.js";
 import { extractMenu, normalizeMenu, buildCloverWorkbook } from "./lib/menu.js";
 import { MODELS } from "./lib/pricing.js";
-import { dbEnabled, listSubmissions, getSubmission, upsertSubmission, deleteSubmission } from "./lib/db.js";
+import { dbEnabled, listSubmissions, listAllSubmissions, getSubmission, upsertSubmission, deleteSubmission } from "./lib/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -55,6 +55,16 @@ app.get("/api/history", async (_req, res) => {
   }
 });
 
+// Full export of all saved submissions (including data) for download.
+app.get("/api/history/export", async (_req, res) => {
+  if (!dbEnabled) return res.json({ backend: "local", items: [] });
+  try {
+    res.json({ backend: "supabase", items: await listAllSubmissions() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/history/:id", async (req, res) => {
   if (!dbEnabled) return res.status(404).json({ error: "History backend not configured." });
   try {
@@ -69,9 +79,9 @@ app.get("/api/history/:id", async (req, res) => {
 app.post("/api/history", async (req, res) => {
   if (!dbEnabled) return res.status(503).json({ error: "History backend not configured." });
   try {
-    const { id, dba, appType, data } = req.body || {};
+    const { id, dba, appType, rep, data } = req.body || {};
     if (!data || typeof data !== "object") return res.status(400).json({ error: "Missing data." });
-    const savedId = await upsertSubmission({ id, dba, appType, data });
+    const savedId = await upsertSubmission({ id, dba, appType, rep, data });
     res.json({ id: savedId });
   } catch (e) {
     console.error("History save failed:", e.message);

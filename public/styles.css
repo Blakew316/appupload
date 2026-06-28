@@ -288,7 +288,21 @@ main {
   font: inherit; font-size: 0.95rem; background: #fafbfc;
 }
 .history-search:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.history-actions { display: flex; gap: 14px; }
+.history-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.history-filters .history-search { flex: 1 1 220px; margin: 0; }
+.rep-filter {
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px;
+  font: inherit; font-size: 0.9rem; background: #fafbfc;
+}
+.rep-set { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
+.rep-set input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: inherit; font-size: 0.88rem; width: 130px; background: #fafbfc; }
 .history-empty { color: var(--ink-soft); font-size: 0.9rem; padding: 8px 2px; list-style: none; }
+.history-exp {
+  width: 38px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  color: var(--accent-dark); font-size: 1rem; cursor: pointer;
+}
+.history-exp:hover { background: var(--accent-soft); border-color: var(--accent); }
 .history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .history-item { display: flex; align-items: stretch; gap: 6px; }
 .history-open {

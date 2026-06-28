@@ -58,10 +58,19 @@
         <section id="historySection" class="card hidden">
           <div class="history-head">
             <h2 class="step-title" style="margin:0"><span class="step-num">★</span> Past uploads &amp; downloads</h2>
-            <button id="clearHistoryBtn" type="button" class="link-btn">Clear history</button>
+            <div class="history-actions">
+              <button id="exportAllBtn" type="button" class="link-btn">Export all</button>
+              <button id="clearHistoryBtn" type="button" class="link-btn">Clear history</button>
+            </div>
           </div>
           <p id="historyNote" class="muted small history-note">Click one to reopen and fill more forms.</p>
-          <input id="historySearch" type="search" class="history-search" placeholder="Search by business name or form type…" aria-label="Search past submissions" />
+          <div class="history-filters">
+            <input id="historySearch" type="search" class="history-search" placeholder="Search by business name or form type…" aria-label="Search past submissions" />
+            <select id="repFilter" class="rep-filter" aria-label="Filter by rep">
+              <option value="">All reps</option>
+            </select>
+            <label class="rep-set">Your name <input id="repInput" type="text" placeholder="tags new ones" /></label>
+          </div>
           <ul id="historyList" class="history-list"></ul>
         </section>
 

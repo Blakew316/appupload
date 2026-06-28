@@ -370,8 +370,48 @@ function focusForm(key) {
 
 /* ---------------- submission history (browser-only) ---------------- */
 const HISTORY_KEY = "appupload.history.v1";
+const REP_KEY = "appupload.rep";
 let currentHistoryId = null;
 let HISTORY_BACKEND = "local"; // becomes 'supabase' when the server has a database configured
+
+function getCurrentRep() {
+  try {
+    return localStorage.getItem(REP_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function setCurrentRep(v) {
+  try {
+    localStorage.setItem(REP_KEY, v);
+  } catch {}
+}
+const repFor = (record) => getCurrentRep() || (record && record.sales && record.sales.salesAgentName) || "";
+
+function downloadJson(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  triggerDownload(blob, filename);
+}
+async function exportEntry(id, dba) {
+  const rec = await historyGet(id);
+  if (!rec) return;
+  const name = (dba || "submission").replace(/[^a-z0-9-_]+/gi, "_").slice(0, 50);
+  downloadJson(rec, `${name}.json`);
+}
+async function exportAll() {
+  let items;
+  if (HISTORY_BACKEND === "supabase") {
+    try {
+      items = (await (await fetch("/api/history/export")).json()).items || [];
+    } catch {
+      items = [];
+    }
+  } else {
+    items = loadHistory().map((e) => ({ id: e.id, dba: e.dba, appType: e.appType, rep: e.rep || "", savedAt: e.savedAt, record: e.record }));
+  }
+  if (!items.length) return;
+  downloadJson(items, "appupload-history.json");
+}
 
 async function historyList() {
   if (HISTORY_BACKEND === "supabase") {
@@ -402,7 +442,7 @@ async function historyUpsert(record, id) {
       const r = await fetch("/api/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, dba, appType: record.appType || "unknown", data: record }),
+        body: JSON.stringify({ id, dba, appType: record.appType || "unknown", rep: repFor(record), data: record }),
       });
       return (await r.json().catch(() => ({}))).id || id;
     } catch {
@@ -440,6 +480,7 @@ function upsertHistory(record, id) {
     savedAt: Date.now(),
     dba: (record.business && (record.business.dba || record.business.legalName)) || "(unnamed)",
     appType: record.appType || "unknown",
+    rep: repFor(record),
     record,
   };
   const idx = list.findIndex((e) => e.id === entry.id);
@@ -457,19 +498,40 @@ async function renderHistory() {
 
 const typeLabel = (e) => (e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—");
 
+function populateRepFilter() {
+  const sel = el("repFilter");
+  if (!sel) return;
+  const reps = [...new Set(historyCache.map((e) => e.rep).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = "";
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "All reps";
+  sel.appendChild(all);
+  reps.forEach((r) => {
+    const o = document.createElement("option");
+    o.value = r;
+    o.textContent = r;
+    sel.appendChild(o);
+  });
+  if ([...sel.options].some((o) => o.value === cur)) sel.value = cur;
+}
+
 function paintHistory() {
   const ul = el("historyList");
   if (!ul) return;
+  populateRepFilter();
   const q = (el("historySearch")?.value || "").trim().toLowerCase();
-  const list = q
-    ? historyCache.filter((e) => `${e.dba || ""} ${typeLabel(e)}`.toLowerCase().includes(q))
-    : historyCache;
+  const repSel = el("repFilter")?.value || "";
+  let list = historyCache;
+  if (q) list = list.filter((e) => `${e.dba || ""} ${typeLabel(e)} ${e.rep || ""}`.toLowerCase().includes(q));
+  if (repSel) list = list.filter((e) => (e.rep || "") === repSel);
 
   ul.innerHTML = "";
   if (list.length === 0) {
     const li = document.createElement("li");
     li.className = "history-empty";
-    li.textContent = q ? "No matches." : "No saved submissions yet.";
+    li.textContent = historyCache.length ? "No matches." : "No saved submissions yet.";
     ul.appendChild(li);
   }
   list.forEach((e) => {
@@ -482,8 +544,14 @@ function paintHistory() {
     open.className = "history-open";
     open.innerHTML = `<strong></strong><span class="history-meta"></span>`;
     open.querySelector("strong").textContent = e.dba;
-    open.querySelector(".history-meta").textContent = `${typeLabel(e)} · ${when}`;
+    open.querySelector(".history-meta").textContent = `${typeLabel(e)}${e.rep ? " · " + e.rep : ""} · ${when}`;
     open.addEventListener("click", () => resumeHistory(e.id));
+    const exp = document.createElement("button");
+    exp.type = "button";
+    exp.className = "history-exp";
+    exp.title = "Export as JSON";
+    exp.textContent = "⬇";
+    exp.addEventListener("click", () => exportEntry(e.id, e.dba));
     const del = document.createElement("button");
     del.type = "button";
     del.className = "history-del";
@@ -494,6 +562,7 @@ function paintHistory() {
       renderHistory();
     });
     li.appendChild(open);
+    li.appendChild(exp);
     li.appendChild(del);
     ul.appendChild(li);
   });
@@ -920,6 +989,11 @@ function init() {
   el("jumpFormSelect").addEventListener("change", (e) => focusForm(e.target.value));
   el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
   el("historySearch").addEventListener("input", paintHistory);
+  el("repFilter").addEventListener("change", paintHistory);
+  el("exportAllBtn").addEventListener("click", exportAll);
+  const repInput = el("repInput");
+  repInput.value = getCurrentRep();
+  repInput.addEventListener("input", () => setCurrentRep(repInput.value.trim()));
   el("clearHistoryBtn").addEventListener("click", async () => {
     if (!confirm("Clear all saved submissions?")) return;
     if (HISTORY_BACKEND === "supabase") {
