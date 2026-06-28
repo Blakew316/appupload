@@ -53,11 +53,17 @@ function makeUploader({ dropzone, input, browseBtn, thumbs, onChange }) {
   let nextId = 1;
 
   async function add(fileList) {
-    const files = Array.from(fileList).filter((f) => /^image\//.test(f.type));
+    const isPdf = (f) => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+    const files = Array.from(fileList).filter((f) => /^image\//.test(f.type) || isPdf(f));
     for (const file of files) {
       if (pages.length >= MAX_FILES) {
-        showBanner("warn", `Up to ${MAX_FILES} images.`);
+        showBanner("warn", `Up to ${MAX_FILES} files.`);
         break;
+      }
+      if (isPdf(file)) {
+        // PDFs are sent as-is; the server renders each page to an image.
+        pages.push({ id: nextId++, isPdf: true, name: file.name, blob: file });
+        continue;
       }
       try {
         const { dataUrl, blob } = await resizeImage(file);
@@ -81,9 +87,14 @@ function makeUploader({ dropzone, input, browseBtn, thumbs, onChange }) {
     thumbs.innerHTML = "";
     pages.forEach((p, idx) => {
       const li = document.createElement("li");
-      li.className = "thumb";
-      li.innerHTML = `<span class="page-badge">${idx + 1}</span><button class="remove-thumb" aria-label="Remove">×</button><img alt="upload ${idx + 1}" />`;
-      li.querySelector("img").src = p.dataUrl;
+      li.className = "thumb" + (p.isPdf ? " thumb-pdf" : "");
+      if (p.isPdf) {
+        li.innerHTML = `<span class="page-badge">${idx + 1}</span><button class="remove-thumb" aria-label="Remove">×</button><div class="pdf-tile"><span class="pdf-ico">PDF</span><span class="pdf-name"></span></div>`;
+        li.querySelector(".pdf-name").textContent = p.name || "Document.pdf";
+      } else {
+        li.innerHTML = `<span class="page-badge">${idx + 1}</span><button class="remove-thumb" aria-label="Remove">×</button><img alt="upload ${idx + 1}" />`;
+        li.querySelector("img").src = p.dataUrl;
+      }
       li.querySelector(".remove-thumb").addEventListener("click", () => remove(p.id));
       thumbs.appendChild(li);
     });
@@ -927,7 +938,7 @@ async function extractApplication() {
   if (appUploader.pages.length === 0) return;
   showSection("app", "processing");
   const form = new FormData();
-  appUploader.pages.forEach((p, i) => form.append("images", p.blob, `img-${i + 1}.jpg`));
+  appUploader.pages.forEach((p, i) => form.append("images", p.blob, p.isPdf ? `doc-${i + 1}.pdf` : `img-${i + 1}.jpg`));
   try {
     const res = await fetch("/api/extract", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
@@ -1002,7 +1013,7 @@ async function extractMenu() {
   if (menuUploader.pages.length === 0) return;
   showSection("menu", "processing");
   const form = new FormData();
-  menuUploader.pages.forEach((p, i) => form.append("images", p.blob, `menu-${i + 1}.jpg`));
+  menuUploader.pages.forEach((p, i) => form.append("images", p.blob, p.isPdf ? `menu-${i + 1}.pdf` : `menu-${i + 1}.jpg`));
   try {
     const res = await fetch("/api/menu/extract", { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));

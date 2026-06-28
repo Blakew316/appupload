@@ -20,14 +20,16 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_BYTES, files: MAX_FILES },
   fileFilter: (_req, file, cb) => {
-    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
-    else cb(new Error("Only JPEG, PNG, WebP, or GIF images are allowed."));
+    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype) || file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only images (JPEG, PNG, WebP, GIF) or PDF files are allowed."));
   },
 });
 
 app.use(express.json({ limit: "8mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// Each uploaded file becomes a media item; the extractor sends images as image
+// blocks and PDFs as native document blocks (Claude reads typed + scanned PDFs).
 const filesToImages = (files) =>
   (files || []).map((f) => ({ data: f.buffer.toString("base64"), mediaType: f.mimetype }));
 
