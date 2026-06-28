@@ -52,8 +52,21 @@
         <section id="appReview" class="card hidden">
           <div class="result-head">
             <h2 class="step-title"><span class="step-num">2</span> Review &amp; complete</h2>
-            <div id="detectBadge" class="detect-badge"></div>
+            <div class="head-right">
+              <div id="detectBadge" class="detect-badge"></div>
+              <label class="jump-form">
+                <span>Fill fields for form</span>
+                <select id="jumpFormSelect">
+                  <option value="">All sections</option>
+                  <option value="application">Application (Citizens / Merrick)</option>
+                  <option value="coversheet">Required Set-Up coversheet</option>
+                  <option value="po">Purchase Order</option>
+                  <option value="clover">Clover Addendum</option>
+                </select>
+              </label>
+            </div>
           </div>
+          <datalist id="equipmentModels"></datalist>
           <div class="field-row">
             <label class="field">
               <span>Application form</span>

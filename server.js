@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { extractFromImages, normalizeRecord } from "./lib/extract.js";
 import { fillForm, mergePdfs, prepareRecord, resolveForm, hasCloverEquipment } from "./lib/fillForm.js";
 import { extractMenu, normalizeMenu, buildCloverWorkbook } from "./lib/menu.js";
+import { MODELS } from "./lib/pricing.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -37,6 +38,9 @@ app.get("/api/health", (_req, res) => {
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
   });
 });
+
+// Equipment model list (from the pricing matrix) for the PO equipment dropdown.
+app.get("/api/equipment", (_req, res) => res.json({ models: MODELS }));
 
 /* ---------- Merchant application: extract + fill ---------- */
 

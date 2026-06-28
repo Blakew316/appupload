@@ -246,14 +246,14 @@ const REVIEW_SECTIONS = [
     ["signatures.date2", "Signer 2 date"],
   ]},
   { title: "Equipment", fields: [
+    ["equipment.0.model", "Item 1 model", "model"],
     ["equipment.0.type", "Item 1 type"],
-    ["equipment.0.model", "Item 1 model"],
     ["equipment.0.quantity", "Item 1 qty"],
+    ["equipment.1.model", "Item 2 model", "model"],
     ["equipment.1.type", "Item 2 type"],
-    ["equipment.1.model", "Item 2 model"],
     ["equipment.1.quantity", "Item 2 qty"],
+    ["equipment.2.model", "Item 3 model", "model"],
     ["equipment.2.type", "Item 3 type"],
-    ["equipment.2.model", "Item 3 model"],
     ["equipment.2.quantity", "Item 3 qty"],
   ]},
   { title: "Coversheet — set-up form", fields: [
@@ -329,6 +329,44 @@ const OWNER_FIELDS = [
 ];
 
 let workingRecord = null;
+let EQUIPMENT_MODELS = [];
+
+function buildEquipmentDatalist() {
+  const dl = el("equipmentModels");
+  if (!dl) return;
+  dl.innerHTML = "";
+  EQUIPMENT_MODELS.forEach((m) => {
+    const opt = document.createElement("option");
+    opt.value = m.model;
+    opt.label = `$${m.price} · ${m.category}`;
+    dl.appendChild(opt);
+  });
+}
+
+// Which review sections matter for each form, so picking a form reveals just those fields.
+const FORM_SECTIONS = {
+  application: ["Business", "Owner / Principal 1", "Owner / Principal 2", "Banking (from voided check)", "Transaction", "Fees — authorization / monthly / misc", "Service acceptance & fee schedule", "Signatures (printed name / title / date)"],
+  coversheet: ["Coversheet — set-up form", "Business"],
+  po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
+  clover: ["Business", "Signatures (printed name / title / date)"],
+};
+
+function focusForm(key) {
+  const sections = [...document.querySelectorAll("#reviewForm > details.review-section")];
+  const wanted = FORM_SECTIONS[key];
+  if (!wanted) {
+    sections.forEach((d, i) => (d.open = i === 0));
+    return;
+  }
+  let first = null;
+  sections.forEach((d) => {
+    const title = d.querySelector("summary")?.textContent || "";
+    const match = wanted.includes(title);
+    d.open = match;
+    if (match && !first) first = d;
+  });
+  if (first) first.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 function renderReviewForm(record) {
   const container = el("reviewForm");
@@ -376,10 +414,26 @@ function renderReviewForm(record) {
       inputEl = document.createElement("input");
       inputEl.type = "text";
       inputEl.value = value ?? "";
+      if (type === "model") inputEl.setAttribute("list", "equipmentModels");
     }
     inputEl.dataset.path = path;
     inputEl.addEventListener("input", () => wrap.classList.toggle("empty", inputEl.value === ""));
     wrap.appendChild(inputEl);
+    if (type === "model") {
+      const hint = document.createElement("span");
+      hint.className = "price-hint";
+      const sync = () => {
+        const m = EQUIPMENT_MODELS.find((x) => x.model.toLowerCase() === inputEl.value.trim().toLowerCase());
+        hint.textContent = m ? `${m.category} · $${m.price}` : "";
+        if (m) {
+          const typeInp = document.querySelector(`[data-path="${path.replace(/\.model$/, ".type")}"]`);
+          if (typeInp) { typeInp.value = m.category; typeInp.dispatchEvent(new Event("input")); }
+        }
+      };
+      inputEl.addEventListener("input", sync);
+      wrap.appendChild(hint);
+      sync();
+    }
     return wrap;
   };
 
@@ -440,6 +494,7 @@ function renderReviewForm(record) {
       if (toggle && toggle.checked) applySameAsDba(true);
     });
   });
+  buildEquipmentDatalist();
 }
 
 function applySameAsDba(checked) {
@@ -676,6 +731,7 @@ function init() {
   el("genCoverBtn").addEventListener("click", () => generate("coversheet"));
   el("genPoBtn").addEventListener("click", () => generate("po"));
   el("genCloverBtn").addEventListener("click", () => generate("clover"));
+  el("jumpFormSelect").addEventListener("change", (e) => focusForm(e.target.value));
   el("appRestartBtn").addEventListener("click", () => {
     appUploader.clear();
     showSection("app", "upload");
@@ -697,6 +753,13 @@ function init() {
   });
 
   checkHealth();
+  fetch("/api/equipment")
+    .then((r) => r.json())
+    .then((d) => {
+      EQUIPMENT_MODELS = d.models || [];
+      buildEquipmentDatalist();
+    })
+    .catch(() => {});
 }
 
 document.addEventListener("DOMContentLoaded", init);
