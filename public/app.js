@@ -280,7 +280,7 @@ const REVIEW_SECTIONS = [
     ["sales.salesAgentName", "Sales partner name"],
     ["coversheet.territoryManager", "Territory manager"],
     ["coversheet.teamColor", "Team color"],
-    ["coversheet.platform", "Requested platform", "select", [["", "—"], ["tsys", "TSYS (Synovus)"], ["fdomaha", "FD (Citizens)"], ["fdnorth", "FD North (Synovus)"], ["other", "Other"]]],
+    ["coversheet.platform", "Requested platform", "select", [["", "—"], ["tsys", "Merrick"], ["fdomaha", "FD (Citizens)"], ["fdnorth", "FD North (Synovus)"], ["other", "Other"]]],
     ["coversheet.platformOther", "Platform — other"],
     ["coversheet.telemarketing", "Telemarketing lead", "checkbox"],
     ["coversheet.reBoard", "Re-board", "checkbox"],
