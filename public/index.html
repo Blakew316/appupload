@@ -130,6 +130,11 @@
 
           <div id="reviewForm"></div>
 
+          <div class="sign-bar">
+            <button id="signNowBtn" type="button" class="btn btn-sign">✍ Sign now — Owner 1</button>
+            <span id="signStatus" class="sign-status" aria-live="polite"></span>
+          </div>
+
           <div class="generate-actions">
             <p class="dl-title">Choose the documents to download</p>
             <div class="dl-picker">
@@ -189,6 +194,30 @@
         </section>
       </div>
     </main>
+
+    <!-- Sign Now modal: Owner 1 draws or types a signature -->
+    <div id="signModal" class="sign-modal hidden" role="dialog" aria-modal="true" aria-labelledby="signModalTitle">
+      <div class="sign-card">
+        <h3 id="signModalTitle" class="sign-modal-title">Sign — Owner 1</h3>
+        <p class="sign-modal-help">Draw your signature in the box, or switch to Type. This signs the application for Owner 1 only.</p>
+        <div class="sign-tabs" role="tablist">
+          <button type="button" id="signTabDraw" class="sign-tab active" role="tab">Draw</button>
+          <button type="button" id="signTabType" class="sign-tab" role="tab">Type</button>
+        </div>
+        <div id="signDrawPane" class="sign-pane">
+          <canvas id="signPad" class="sign-pad" width="640" height="220"></canvas>
+        </div>
+        <div id="signTypePane" class="sign-pane hidden">
+          <input id="signTypeInput" type="text" class="sign-type-input" placeholder="Type your full legal name" autocomplete="name" />
+          <div id="signTypePreview" class="sign-type-preview" aria-hidden="true"></div>
+        </div>
+        <div class="sign-modal-actions">
+          <button type="button" id="signClearBtn" class="btn btn-ghost">Clear</button>
+          <button type="button" id="signCancelBtn" class="btn btn-ghost">Cancel</button>
+          <button type="button" id="signApplyBtn" class="btn btn-primary">Apply signature</button>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>

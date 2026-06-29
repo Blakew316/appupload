@@ -124,11 +124,11 @@ app.post("/api/extract", (req, res) => {
 // body: { record, form?, date?, kind: 'combined'|'application'|'coversheet' }
 app.post("/api/packet", async (req, res) => {
   try {
-    const { record: raw, form: formOverride, date, kind = "combined", kinds } = req.body || {};
+    const { record: raw, form: formOverride, date, kind = "combined", kinds, signature } = req.body || {};
     if (!raw || typeof raw !== "object") return res.status(400).json({ error: "Missing record." });
     const record = normalizeRecord(raw);
     const form = resolveForm(record, formOverride);
-    const base = prepareRecord(record, { date });
+    const base = prepareRecord(record, { date, signature });
 
     let bytes;
     let name;

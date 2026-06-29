@@ -1009,6 +1009,7 @@ function resetDlChecks() {
 
 function showReview(record, detected = false) {
   resetDlChecks();
+  clearSignature();
   applyManagerDefault(record);
   el("appTypeSelect").value = record.appType || "unknown";
   const badge = el("detectBadge");
@@ -1035,7 +1036,7 @@ async function generateSelected() {
   collectReview();
   currentHistoryId = await historyUpsert(workingRecord, currentHistoryId);
   renderHistory();
-  const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kinds };
+  const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kinds, signature: signatureData };
   try {
     const res = await fetch("/api/packet", {
       method: "POST",
@@ -1052,6 +1053,144 @@ async function generateSelected() {
   } catch (e) {
     showBanner("error", e.message);
   }
+}
+
+/* ---------------- Sign Now (Owner 1) ---------------- */
+let signatureData = ""; // PNG data URL of Owner 1's signature (per session, not persisted)
+let signPad = null;     // lazily-built drawing pad controller
+
+function clearSignature() {
+  signatureData = "";
+  updateSignStatus();
+}
+
+function updateSignStatus() {
+  const status = el("signStatus");
+  const btn = el("signNowBtn");
+  if (!status || !btn) return;
+  if (signatureData) {
+    status.textContent = "✓ Signed (Owner 1)";
+    status.classList.add("signed");
+    btn.textContent = "✍ Edit signature — Owner 1";
+  } else {
+    status.textContent = "";
+    status.classList.remove("signed");
+    btn.textContent = "✍ Sign now — Owner 1";
+  }
+}
+
+// Pointer-driven signature pad (works for mouse, touch, and pen).
+function buildSignPad() {
+  const canvas = el("signPad");
+  const ctx = canvas.getContext("2d");
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "#0a1973";
+  let drawing = false;
+  let dirty = false;
+  const pos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+  };
+  canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    drawing = true;
+    canvas.setPointerCapture(e.pointerId);
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    dirty = true;
+  });
+  const stop = () => { drawing = false; };
+  canvas.addEventListener("pointerup", stop);
+  canvas.addEventListener("pointercancel", stop);
+  canvas.addEventListener("pointerleave", stop);
+  return {
+    clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); dirty = false; },
+    isEmpty() { return !dirty; },
+    dataURL() { return canvas.toDataURL("image/png"); },
+  };
+}
+
+// Render a typed name as a cursive signature PNG, trimmed to the text width.
+function typedSignatureDataURL(name) {
+  const t = (name || "").trim();
+  if (!t) return "";
+  const font = "64px 'Brush Script MT','Snell Roundhand','Segoe Script',cursive";
+  const meas = document.createElement("canvas").getContext("2d");
+  meas.font = font;
+  const w = Math.ceil(meas.measureText(t).width) + 24;
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = 96;
+  const ctx = c.getContext("2d");
+  ctx.font = font;
+  ctx.fillStyle = "#0a1973";
+  ctx.textBaseline = "middle";
+  ctx.fillText(t, 12, 50);
+  return c.toDataURL("image/png");
+}
+
+function openSignModal() {
+  const modal = el("signModal");
+  if (!signPad) signPad = buildSignPad();
+  signPad.clear();
+  el("signTypeInput").value = "";
+  el("signTypePreview").textContent = "";
+  signSwitchTab("draw");
+  modal.classList.remove("hidden");
+}
+
+function closeSignModal() {
+  el("signModal").classList.add("hidden");
+}
+
+let signTab = "draw";
+function signSwitchTab(which) {
+  signTab = which;
+  const draw = which === "draw";
+  el("signTabDraw").classList.toggle("active", draw);
+  el("signTabType").classList.toggle("active", !draw);
+  el("signDrawPane").classList.toggle("hidden", !draw);
+  el("signTypePane").classList.toggle("hidden", draw);
+}
+
+function applySignature() {
+  let data = "";
+  if (signTab === "draw") {
+    if (signPad && !signPad.isEmpty()) data = signPad.dataURL();
+  } else {
+    data = typedSignatureDataURL(el("signTypeInput").value);
+  }
+  if (!data) {
+    showBanner("warn", signTab === "draw" ? "Draw your signature first." : "Type your name first.");
+    return;
+  }
+  signatureData = data;
+  updateSignStatus();
+  closeSignModal();
+}
+
+function initSignNow() {
+  el("signNowBtn").addEventListener("click", openSignModal);
+  el("signCancelBtn").addEventListener("click", closeSignModal);
+  el("signApplyBtn").addEventListener("click", applySignature);
+  el("signClearBtn").addEventListener("click", () => {
+    if (signTab === "draw") { if (signPad) signPad.clear(); }
+    else { el("signTypeInput").value = ""; el("signTypePreview").textContent = ""; }
+  });
+  el("signTabDraw").addEventListener("click", () => signSwitchTab("draw"));
+  el("signTabType").addEventListener("click", () => signSwitchTab("type"));
+  el("signTypeInput").addEventListener("input", (e) => { el("signTypePreview").textContent = e.target.value; });
+  el("signModal").addEventListener("click", (e) => { if (e.target === el("signModal")) closeSignModal(); });
 }
 
 /* ---------------- menu flow ---------------- */
@@ -1229,6 +1368,7 @@ function init() {
   el("appClearBtn").addEventListener("click", () => appUploader.clear());
   el("genSelectedBtn").addEventListener("click", generateSelected);
   dlChecks().forEach((c) => c.addEventListener("change", updateDlBtn));
+  initSignNow();
   el("jumpFormSelect").addEventListener("change", (e) => {
     const v = e.target.value;
     if (v === "citizens" || v === "merrick") {
