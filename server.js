@@ -148,7 +148,7 @@ app.post("/api/packet", async (req, res) => {
     let labelOverride = null;
     if (Array.isArray(kinds) && kinds.length) {
       // Multi-select: build the chosen documents in a fixed order and merge into one PDF.
-      const order = ["coversheet", "application", "po", "clover"];
+      const order = ["coversheet", "application", "po", "clover", "bankchange"];
       const chosen = order.filter((k) => kinds.includes(k));
       const parts = [];
       for (const k of chosen) {
@@ -156,12 +156,13 @@ app.post("/api/packet", async (req, res) => {
         else if (k === "application") { if (form) parts.push(await fillForm(form, base)); }
         else if (k === "po") parts.push(await fillForm("purchase_order", base));
         else if (k === "clover") parts.push(await fillForm("clover_addendum", base));
+        else if (k === "bankchange") parts.push(await fillForm("bank_change", base));
       }
       if (!parts.length) {
         return res.status(400).json({ error: "None of the selected documents could be generated. For the Application, choose Citizens or Merrick above." });
       }
       bytes = parts.length === 1 ? parts[0] : await mergePdfs(parts);
-      const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum" };
+      const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change" };
       labelOverride = chosen.length === 1 ? labels[chosen[0]] : "Packet";
       name = chosen.length === 1 ? chosen[0] : "packet";
     } else if (kind === "coversheet") {
@@ -177,6 +178,9 @@ app.post("/api/packet", async (req, res) => {
     } else if (kind === "clover") {
       bytes = await fillForm("clover_addendum", base);
       name = "clover-addendum";
+    } else if (kind === "bankchange") {
+      bytes = await fillForm("bank_change", base);
+      name = "bank-change";
     } else {
       // combined packet: coversheet + application (+ Clover addendum when Clover equipment is present)
       const parts = [await fillForm("coversheet", base)];
@@ -187,7 +191,7 @@ app.post("/api/packet", async (req, res) => {
     }
 
     // Lead the file name with the Doing-Business-As name so it's auto-labeled for easy finding.
-    const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", combined: "Packet" };
+    const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", combined: "Packet" };
     const dba = (record.business.dba || record.business.legalName || "").trim();
     const safeDba = dba.replace(/[\/\\:*?"<>|\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "Application";
     const fileName = `${safeDba} - ${labelOverride || labels[kind] || name}.pdf`;

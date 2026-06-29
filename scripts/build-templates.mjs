@@ -26,6 +26,7 @@ const FORMS = {
   coversheet: "coversheet.pdf",
   purchase_order: "purchase_order.pdf",
   clover_addendum: "clover_addendum.pdf",
+  bank_change: "bank_change.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });

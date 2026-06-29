@@ -328,6 +328,22 @@ const REVIEW_SECTIONS = [
     ["po.salesTax", "Sales tax ($)"],
     ["po.frontendPlatform", "Clover frontend platform", "select", [["", "—"], ["omaha", "Omaha"], ["nashville", "Nashville"]]],
   ]},
+  { title: "Bank account change", fields: [
+    ["bankChange.merchantId", "Merchant ID number (defaults to MID)"],
+    ["bankChange.fundBankName", "Funding — bank name"],
+    ["bankChange.fundRouting", "Funding — routing #"],
+    ["bankChange.fundAccount", "Funding — account #"],
+    ["bankChange.billBankName", "Billing — bank name"],
+    ["bankChange.billRouting", "Billing — routing #"],
+    ["bankChange.billAccount", "Billing — account #"],
+    ["bankChange.addrMatchesFile", "Address matches what's on file", "checkbox"],
+    ["bankChange.addrChangeLegal", "Address change from Legal Entity", "checkbox"],
+    ["bankChange.addrChangeDba", "Address change from Location (DBA)", "checkbox"],
+    ["bankChange.settleChargebacksToFunding", "TSYS: settle chargebacks to Funding account", "checkbox"],
+    ["bankChange.docVoidedCheck", "Doc provided: pre-printed voided check", "checkbox"],
+    ["bankChange.docBankLetter", "Doc provided: bank letter", "checkbox"],
+    ["bankChange.docBankStatement", "Doc provided: bank statement", "checkbox"],
+  ]},
 ];
 
 const OWNER_FIELDS = [
@@ -374,6 +390,7 @@ const FORM_SECTIONS = {
   coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
   clover: ["Business", "Signatures (printed name / title / date)"],
+  bankchange: ["Bank account change", "Business", "Owner / Principal 1"],
 };
 
 // Within the shown sections, only these field keys matter for a given form, so a
@@ -393,6 +410,12 @@ const FORM_FIELDS = {
   clover: [
     "business.legalName", "business.email",
     "signatures.printedName", "signatures.title", "signatures.date",
+  ],
+  bankchange: [
+    "bankChange.",
+    "business.dba", "business.legalName", "business.phone",
+    "business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip",
+    "owners.0.first", "owners.0.last",
   ],
 };
 const fieldAllowed = (k, allow) => allow.some((a) => (a.endsWith(".") ? k.startsWith(a) : k === a));
@@ -708,7 +731,7 @@ function blankRecord() {
     appType: "unknown", appTypeConfidence: "", documents: {},
     business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
     serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}, {}],
-    coversheet: {}, po: {}, sales: {}, notes: "",
+    coversheet: {}, po: {}, bankChange: {}, sales: {}, notes: "",
   };
 }
 
@@ -724,7 +747,7 @@ function startBlankForm(key) {
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "coversheet", "po", "clover"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1030,7 +1053,7 @@ function showReview(record, detected = false) {
 }
 
 async function generateSelected() {
-  const order = ["coversheet", "application", "po", "clover"];
+  const order = ["coversheet", "application", "po", "clover", "bankchange"];
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
@@ -1271,7 +1294,7 @@ function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 // Human-readable form labels used in downloaded file names.
-const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum" };
+const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change" };
 // Lead the file name with the Doing-Business-As name so downloads are auto-labeled
 // and easy to find. Falls back to legal name, then a generic label.
 function pdfFileName(record, kind) {
