@@ -988,7 +988,7 @@ async function extractApplication() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Extraction failed (${res.status}).`);
     workingRecord = data.record;
-    currentHistoryId = await historyUpsert(workingRecord);
+    currentHistoryId = (await historyUpsert(workingRecord)) || currentHistoryId;
     renderHistory();
     showReview(workingRecord, true); // came from upload + auto-detection
   } catch (e) {
@@ -1034,7 +1034,7 @@ async function generateSelected() {
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
-  currentHistoryId = await historyUpsert(workingRecord, currentHistoryId);
+  currentHistoryId = (await historyUpsert(workingRecord, currentHistoryId)) || currentHistoryId;
   renderHistory();
   const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kinds, signature: signatureData };
   try {
@@ -1341,8 +1341,10 @@ async function checkHealth() {
           ? "Shared across your team's devices. Click one to reopen and fill more forms."
           : "Saved only in this browser (extracted data only — no photos). Click one to reopen and fill more forms.";
     }
-    renderHistory();
   } catch {}
+  // Render once the backend is known (or defaulted on failure) to avoid a
+  // local-then-supabase flash and a redundant history fetch.
+  renderHistory();
 }
 
 function init() {
@@ -1426,8 +1428,7 @@ function init() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  checkHealth();
-  renderHistory();
+  checkHealth(); // renders history itself once the backend is determined
   fetch("/api/equipment")
     .then((r) => r.json())
     .then((d) => {

@@ -33,6 +33,11 @@ app.use(express.static(path.join(__dirname, "public")));
 const filesToImages = (files) =>
   (files || []).map((f) => ({ data: f.buffer.toString("base64"), mediaType: f.mimetype }));
 
+// Supabase rows use uuid ids; validate before querying so a malformed id is a clean
+// 404 instead of a Postgres 22P02 → 500. `str` bounds free-text history fields.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const str = (v, max = 255) => (typeof v === "string" ? v.slice(0, max) : "");
+
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
@@ -53,7 +58,7 @@ app.get("/api/history", async (_req, res) => {
     res.json({ backend: "supabase", items: await listSubmissions() });
   } catch (e) {
     console.error("History list failed:", e.message);
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: "Could not load history." });
   }
 });
 
@@ -63,18 +68,21 @@ app.get("/api/history/export", async (_req, res) => {
   try {
     res.json({ backend: "supabase", items: await listAllSubmissions() });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("History export failed:", e.message);
+    res.status(500).json({ error: "Could not export history." });
   }
 });
 
 app.get("/api/history/:id", async (req, res) => {
   if (!dbEnabled) return res.status(404).json({ error: "History backend not configured." });
+  if (!UUID_RE.test(req.params.id)) return res.status(404).json({ error: "Not found." });
   try {
     const record = await getSubmission(req.params.id);
     if (!record) return res.status(404).json({ error: "Not found." });
     res.json({ record });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("History fetch failed:", e.message);
+    res.status(500).json({ error: "Could not load submission." });
   }
 });
 
@@ -82,22 +90,27 @@ app.post("/api/history", async (req, res) => {
   if (!dbEnabled) return res.status(503).json({ error: "History backend not configured." });
   try {
     const { id, dba, appType, rep, data } = req.body || {};
-    if (!data || typeof data !== "object") return res.status(400).json({ error: "Missing data." });
-    const savedId = await upsertSubmission({ id, dba, appType, rep, data });
+    if (!data || typeof data !== "object" || Array.isArray(data)) return res.status(400).json({ error: "Missing data." });
+    const savedId = await upsertSubmission({
+      id: typeof id === "string" && UUID_RE.test(id) ? id : undefined,
+      dba: str(dba), appType: str(appType, 32), rep: str(rep), data,
+    });
     res.json({ id: savedId });
   } catch (e) {
     console.error("History save failed:", e.message);
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: "Could not save submission." });
   }
 });
 
 app.delete("/api/history/:id", async (req, res) => {
   if (!dbEnabled) return res.status(503).json({ error: "History backend not configured." });
+  if (!UUID_RE.test(req.params.id)) return res.json({ ok: true }); // nothing to delete
   try {
     await deleteSubmission(req.params.id);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("History delete failed:", e.message);
+    res.status(500).json({ error: "Could not delete submission." });
   }
 });
 
