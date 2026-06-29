@@ -1139,12 +1139,20 @@ function typedSignatureDataURL(name) {
   return c.toDataURL("image/png");
 }
 
+// Render the typed-name preview; hide the box entirely when empty so a large
+// cursive glyph can't leave a paint ghost behind (a Safari repaint quirk).
+function setTypePreview(value) {
+  const pv = el("signTypePreview");
+  pv.textContent = value;
+  pv.classList.toggle("hidden", value.trim() === "");
+}
+
 function openSignModal() {
   const modal = el("signModal");
   if (!signPad) signPad = buildSignPad();
   signPad.clear();
   el("signTypeInput").value = "";
-  el("signTypePreview").textContent = "";
+  setTypePreview("");
   signSwitchTab("draw");
   modal.classList.remove("hidden");
 }
@@ -1185,11 +1193,11 @@ function initSignNow() {
   el("signApplyBtn").addEventListener("click", applySignature);
   el("signClearBtn").addEventListener("click", () => {
     if (signTab === "draw") { if (signPad) signPad.clear(); }
-    else { el("signTypeInput").value = ""; el("signTypePreview").textContent = ""; }
+    else { el("signTypeInput").value = ""; setTypePreview(""); }
   });
   el("signTabDraw").addEventListener("click", () => signSwitchTab("draw"));
   el("signTabType").addEventListener("click", () => signSwitchTab("type"));
-  el("signTypeInput").addEventListener("input", (e) => { el("signTypePreview").textContent = e.target.value; });
+  el("signTypeInput").addEventListener("input", (e) => setTypePreview(e.target.value));
   el("signModal").addEventListener("click", (e) => { if (e.target === el("signModal")) closeSignModal(); });
 }
 
