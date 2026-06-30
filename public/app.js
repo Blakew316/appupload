@@ -175,6 +175,7 @@ const REVIEW_SECTIONS = [
       ["business.federalTaxId", "Federal Tax ID"],
       ["business.taxType", "Tax type"],
       ["business.taxFilingName", "Tax filing name"],
+      ["business.dnb", "D&B #"],
       ["business.businessType", "Business type"],
       ["business.productsSold", "Products / services sold"],
       ["business.organizationType", "Organization type"],
@@ -321,6 +322,11 @@ const REVIEW_SECTIONS = [
     ["po.salesManager", "Sales manager (defaults to territory mgr)"],
     ["po.billTo", "Equipment bill to (defaults Merchant)"],
     ["po.shipTo", "Ship to", "select", [["", "—"], ["dba", "Merchant DBA"], ["rep", "Sales Rep"], ["other", "Other"]]],
+    ["po.shAttention", "Ship to — attention (defaults to contact)"],
+    ["po.shipStreet", "Ship to — street (defaults to location)"],
+    ["po.shipCity", "Ship to — city (defaults to location)"],
+    ["po.shipState", "Ship to — state (defaults to location)"],
+    ["po.shipZip", "Ship to — ZIP (defaults to location)"],
     ["po.shippingMethod", "Shipping method", "select", [["", "—"], ["ground", "Ground (Free)"], ["2day", "2 Day"], ["overnight", "Overnight"]]],
     ["po.payPlan", "Pay plan", "select", [["", "—"], ["3pay", "3 Pay"], ["4pay", "4 Pay"]]],
     ["po.billingType", "Billing", "select", [["", "—"], ["ach", "ACH (voided check)"], ["cc", "Credit Card"]]],
@@ -389,7 +395,7 @@ const FORM_SECTIONS = {
   application: APP_SECTIONS, // fallback alias
   coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
-  clover: ["Business", "Signatures (printed name / title / date)"],
+  clover: ["Business", "Signatures (printed name / title / date)", "Purchase order (optional)"],
   bankchange: ["Bank account change", "Business", "Owner / Principal 1"],
 };
 
@@ -410,6 +416,7 @@ const FORM_FIELDS = {
   clover: [
     "business.legalName", "business.email",
     "signatures.printedName", "signatures.title", "signatures.date",
+    "po.mid", "po.frontendPlatform",
   ],
   bankchange: [
     "bankChange.",
