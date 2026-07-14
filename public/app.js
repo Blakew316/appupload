@@ -225,6 +225,11 @@ const REVIEW_SECTIONS = [
     ["fees.equipmentRental", "Equipment monthly rental ($)"],
     ["fees.monthToBill", "Month to bill"],
     ["fees.earlyTermination", "Early termination / ETF ($)"],
+    ["fees.batch", "Batch fee ($) — Merrick"],
+    ["fees.returnTxn", "Return transaction fee ($) — Merrick"],
+    ["fees.electronicAvs", "Electronic AVS ($) — Merrick"],
+    ["fees.voiceAuth", "Voice authorization ($) — Merrick"],
+    ["fees.voiceAvs", "Voice AVS ($) — Merrick"],
     ["fees.basilPos", "Basil POS ($) — Merrick"],
     ["fees.saasFee", "SAAS fee ($) — Merrick"],
     ["fees.inactivityFee", "Inactivity fee ($) — Merrick"],
@@ -394,8 +399,8 @@ const FORM_SECTIONS = {
   merrick: APP_SECTIONS,
   fd_north: APP_SECTIONS,
   application: APP_SECTIONS, // fallback alias
-  coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Documents provided"],
-  po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
+  coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Owner / Principal 1", "Documents provided"],
+  po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)", "Coversheet — set-up form"],
   clover: ["Business", "Signatures (printed name / title / date)", "Purchase order (optional)"],
   bankchange: ["Bank account change", "Business", "Owner / Principal 1"],
 };
@@ -405,7 +410,7 @@ const FORM_SECTIONS = {
 // An entry ending in "." matches a whole group by prefix; otherwise it's exact.
 const FORM_FIELDS = {
   po: [
-    "po.", "equipment.",
+    "po.", "equipment.", "sales.salesAgentName", "coversheet.territoryManager", "coversheet.teamColor",
     "banking.bankName", "banking.routing", "banking.account",
     "business.dba", "business.legalName", "business.phone", "business.contactName",
     "business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip",
@@ -413,6 +418,7 @@ const FORM_FIELDS = {
   coversheet: [
     "coversheet.", "documents.", "equipment.", "sales.salesAgentName", "transaction.seasonal",
     "business.dba", "business.email", "business.federalTaxId",
+    "owners.0.first", "owners.0.last", "owners.0.ssn",
   ],
   clover: [
     "business.legalName", "business.email",
@@ -513,24 +519,38 @@ function downloadJson(obj, filename) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   triggerDownload(blob, filename);
 }
-// Regenerate the filled PDF packet (coversheet + application, plus the Clover
-// addendum when Clover equipment is present) for a saved submission.
+// Regenerate the PDF packet for a saved submission. Prefers the exact document
+// mix (and date) used when it was generated; older entries without that memory
+// fall back to inferring the documents from the record's content.
+function inferKinds(record) {
+  const kinds = ["coversheet"];
+  if (["citizens", "merrick", "fd_north"].includes(record.appType)) kinds.push("application");
+  const equip = (record.equipment || []).filter((e) => e && (e.model || e.type));
+  const po = record.po || {};
+  if (equip.length || po.mid || po.payPlan || po.shippingMethod) kinds.push("po");
+  if (equip.some((e) => /clover/i.test(e.model || e.type || ""))) kinds.push("clover");
+  const bc = record.bankChange || {};
+  if (["fundBankName", "fundRouting", "fundAccount", "billBankName", "billRouting", "billAccount"].some((k) => bc[k])) kinds.push("bankchange");
+  return kinds;
+}
 async function downloadEntryPdf(id) {
   const record = await historyGet(id);
   if (!record) return;
   showBanner("info", "Generating PDF…");
+  const kinds = Array.isArray(record._lastKinds) && record._lastKinds.length ? record._lastKinds : inferKinds(record);
+  const date = record._lastDate || new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
   try {
     const res = await fetch("/api/packet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ record, kind: "combined" }),
+      body: JSON.stringify({ record, kinds, date }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || "Could not generate PDF.");
     }
     const blob = await res.blob();
-    triggerDownload(blob, pdfFileName(record, "combined"));
+    triggerDownload(blob, pdfFileName(record, kinds.length === 1 ? kinds[0] : "combined"));
     hideBanner();
   } catch (e) {
     showBanner("error", e.message);
@@ -634,7 +654,7 @@ async function renderHistory() {
   paintHistory();
 }
 
-const typeLabel = (e) => (e.appType === "merrick" ? "Merrick" : e.appType === "citizens" ? "Citizens" : "—");
+const typeLabel = (e) => ({ merrick: "Merrick", citizens: "Citizens", fd_north: "FD North" }[e.appType] || "—");
 
 // Build the top-of-page rep dropdown from the agent list, preserving any
 // previously-saved rep that isn't on the list (so a custom value still shows).
@@ -1067,7 +1087,7 @@ function showReview(record, detected = false) {
     const conf = record.appTypeConfidence || "";
     badge.className = `detect-badge ${type}`;
     badge.textContent =
-      type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${type === "citizens" ? "Citizens" : "Merrick"}${conf ? ` (${conf} confidence)` : ""}`;
+      type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${{ citizens: "Citizens", merrick: "Merrick", fd_north: "FD North" }[type] || type}${conf ? ` (${conf} confidence)` : ""}`;
   } else {
     // Manual form pick or reopened submission — no detection banner.
     badge.className = "detect-badge hidden";
@@ -1082,6 +1102,10 @@ async function generateSelected() {
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
+  // Remember what was generated (and the date used) so the history ⬇ button can
+  // regenerate the same packet later instead of guessing.
+  workingRecord._lastKinds = kinds;
+  workingRecord._lastDate = el("coverDate").value.trim();
   currentHistoryId = (await historyUpsert(workingRecord, currentHistoryId)) || currentHistoryId;
   renderHistory();
   const body = { record: workingRecord, form: el("appTypeSelect").value, date: el("coverDate").value.trim(), kinds, signature: signatureData };
@@ -1164,7 +1188,33 @@ function buildSignPad() {
   return {
     clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); dirty = false; },
     isEmpty() { return !dirty; },
-    dataURL() { return canvas.toDataURL("image/png"); },
+    // Export only the inked bounding box (plus padding). The full pad canvas has
+    // large blank margins that would shrink the signature when the PDF scales it
+    // to fit each signature line.
+    dataURL() {
+      const { width, height } = canvas;
+      const px = ctx.getImageData(0, 0, width, height).data;
+      let minX = width, minY = height, maxX = -1, maxY = -1;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          if (px[(y * width + x) * 4 + 3] > 0) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) return canvas.toDataURL("image/png"); // nothing drawn
+      const pad = 6;
+      minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+      maxX = Math.min(width - 1, maxX + pad); maxY = Math.min(height - 1, maxY + pad);
+      const out = document.createElement("canvas");
+      out.width = maxX - minX + 1;
+      out.height = maxY - minY + 1;
+      out.getContext("2d").drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+      return out.toDataURL("image/png");
+    },
   };
 }
 

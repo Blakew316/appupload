@@ -150,6 +150,10 @@ app.post("/api/packet", async (req, res) => {
       // Multi-select: build the chosen documents in a fixed order and merge into one PDF.
       const order = ["coversheet", "application", "po", "clover", "bankchange"];
       const chosen = order.filter((k) => kinds.includes(k));
+      // Never silently drop a requested document: an Application needs a known type.
+      if (chosen.includes("application") && !form) {
+        return res.status(400).json({ error: "Application type is unknown — pick Citizens, Merrick, or FD North above." });
+      }
       const parts = [];
       for (const k of chosen) {
         if (k === "coversheet") parts.push(await fillForm("coversheet", base));
@@ -159,7 +163,7 @@ app.post("/api/packet", async (req, res) => {
         else if (k === "bankchange") parts.push(await fillForm("bank_change", base));
       }
       if (!parts.length) {
-        return res.status(400).json({ error: "None of the selected documents could be generated. For the Application, choose Citizens or Merrick above." });
+        return res.status(400).json({ error: "None of the selected documents could be generated. For the Application, choose Citizens, Merrick, or FD North above." });
       }
       bytes = parts.length === 1 ? parts[0] : await mergePdfs(parts);
       const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change" };
@@ -169,7 +173,7 @@ app.post("/api/packet", async (req, res) => {
       bytes = await fillForm("coversheet", base);
       name = "coversheet";
     } else if (kind === "application") {
-      if (!form) return res.status(400).json({ error: "Application type is unknown — pick Citizens or Merrick." });
+      if (!form) return res.status(400).json({ error: "Application type is unknown — pick Citizens, Merrick, or FD North." });
       bytes = await fillForm(form, base);
       name = `${form}-application`;
     } else if (kind === "po") {
