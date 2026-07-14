@@ -392,6 +392,7 @@ const APP_SECTIONS = ["Business", "Owner / Principal 1", "Owner / Principal 2", 
 const FORM_SECTIONS = {
   citizens: APP_SECTIONS,
   merrick: APP_SECTIONS,
+  fd_north: APP_SECTIONS,
   application: APP_SECTIONS, // fallback alias
   coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)"],
@@ -749,12 +750,12 @@ function startBlankForm(key) {
     workingRecord = blankRecord();
     currentHistoryId = null;
   }
-  // Citizens / Merrick are distinct applications — lock the app type to the choice.
-  if (key === "citizens" || key === "merrick") workingRecord.appType = key;
+  // Citizens / Merrick / FD North are distinct applications — lock the app type to the choice.
+  if (key === "citizens" || key === "merrick" || key === "fd_north") workingRecord.appType = key;
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "fd_north", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1411,7 +1412,7 @@ function init() {
   initSignNow();
   el("jumpFormSelect").addEventListener("change", (e) => {
     const v = e.target.value;
-    if (v === "citizens" || v === "merrick") {
+    if (v === "citizens" || v === "merrick" || v === "fd_north") {
       el("appTypeSelect").value = v;
       if (workingRecord) workingRecord.appType = v;
     }
