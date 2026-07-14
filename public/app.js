@@ -513,11 +513,28 @@ function downloadJson(obj, filename) {
   const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
   triggerDownload(blob, filename);
 }
-async function exportEntry(id, dba) {
-  const rec = await historyGet(id);
-  if (!rec) return;
-  const name = (dba || "submission").replace(/[^a-z0-9-_]+/gi, "_").slice(0, 50);
-  downloadJson(rec, `${name}.json`);
+// Regenerate the filled PDF packet (coversheet + application, plus the Clover
+// addendum when Clover equipment is present) for a saved submission.
+async function downloadEntryPdf(id) {
+  const record = await historyGet(id);
+  if (!record) return;
+  showBanner("info", "Generating PDF…");
+  try {
+    const res = await fetch("/api/packet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ record, kind: "combined" }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Could not generate PDF.");
+    }
+    const blob = await res.blob();
+    triggerDownload(blob, pdfFileName(record, "combined"));
+    hideBanner();
+  } catch (e) {
+    showBanner("error", e.message);
+  }
 }
 async function exportAll() {
   let items;
@@ -697,9 +714,9 @@ function paintHistory() {
     const exp = document.createElement("button");
     exp.type = "button";
     exp.className = "history-exp";
-    exp.title = "Export as JSON";
+    exp.title = "Download PDF packet";
     exp.textContent = "⬇";
-    exp.addEventListener("click", () => exportEntry(e.id, e.dba));
+    exp.addEventListener("click", () => downloadEntryPdf(e.id));
     const del = document.createElement("button");
     del.type = "button";
     del.className = "history-del";
