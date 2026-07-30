@@ -28,6 +28,7 @@ const FORMS = {
   clover_addendum: "clover_addendum.pdf",
   bank_change: "bank_change.pdf",
   fd_north: "fd_north.pdf",
+  pbt: "pbt.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });
@@ -35,7 +36,14 @@ fs.mkdirSync(ANCHOR_DIR, { recursive: true });
 
 for (const [form, fileName] of Object.entries(FORMS)) {
   const data = new Uint8Array(fs.readFileSync(path.join(TEMPLATE_DIR, fileName)));
-  const doc = await getDocument({ data, useSystemFonts: true }).promise;
+  const doc = await getDocument({
+    data,
+    // Templates with non-embedded standard fonts (e.g. pbt.pdf) need the bundled
+    // font data or every text glyph rasterizes blank in Node.
+    useSystemFonts: false,
+    disableFontFace: true,
+    standardFontDataUrl: path.join(root, "node_modules/pdfjs-dist/standard_fonts/"),
+  }).promise;
   const pagesMeta = [];
 
   for (let p = 1; p <= doc.numPages; p++) {

@@ -398,6 +398,7 @@ const FORM_SECTIONS = {
   citizens: APP_SECTIONS,
   merrick: APP_SECTIONS,
   fd_north: APP_SECTIONS,
+  pbt: [...APP_SECTIONS, "Equipment", "Coversheet — set-up form"],
   application: APP_SECTIONS, // fallback alias
   coversheet: ["Coversheet — set-up form", "Equipment", "Business", "Owner / Principal 1", "Documents provided"],
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)", "Coversheet — set-up form"],
@@ -409,6 +410,13 @@ const FORM_SECTIONS = {
 // shared section (e.g. Business) shows only the fields that form actually uses.
 // An entry ending in "." matches a whole group by prefix; otherwise it's exact.
 const FORM_FIELDS = {
+  pbt: [
+    "business.", "owners.", "banking.", "transaction.", "fees.", "serviceAcceptance.",
+    "signatures.", "documents.", "equipment.", "sales.salesAgentName",
+    "coversheet.fbAppType", "coversheet.fbConnection", "coversheet.autoClose", "coversheet.autoCloseTime",
+    "coversheet.avsCvv", "coversheet.serverNumbers", "coversheet.invoiceNumber",
+    "coversheet.enWex", "coversheet.vasGiftCards", "coversheet.vasCheckServices",
+  ],
   po: [
     "po.", "equipment.", "sales.salesAgentName", "coversheet.territoryManager", "coversheet.teamColor",
     "banking.bankName", "banking.routing", "banking.account",
@@ -524,7 +532,7 @@ function downloadJson(obj, filename) {
 // fall back to inferring the documents from the record's content.
 function inferKinds(record) {
   const kinds = ["coversheet"];
-  if (["citizens", "merrick", "fd_north"].includes(record.appType)) kinds.push("application");
+  if (["citizens", "merrick", "fd_north", "pbt"].includes(record.appType)) kinds.push("application");
   const equip = (record.equipment || []).filter((e) => e && (e.model || e.type));
   const po = record.po || {};
   if (equip.length || po.mid || po.payPlan || po.shippingMethod) kinds.push("po");
@@ -654,7 +662,7 @@ async function renderHistory() {
   paintHistory();
 }
 
-const typeLabel = (e) => ({ merrick: "Merrick", citizens: "Citizens", fd_north: "FD North" }[e.appType] || "—");
+const typeLabel = (e) => ({ merrick: "Merrick", citizens: "Citizens", fd_north: "FD North", pbt: "PB&T" }[e.appType] || "—");
 
 // Build the top-of-page rep dropdown from the agent list, preserving any
 // previously-saved rep that isn't on the list (so a custom value still shows).
@@ -788,11 +796,11 @@ function startBlankForm(key) {
     currentHistoryId = null;
   }
   // Citizens / Merrick / FD North are distinct applications — lock the app type to the choice.
-  if (key === "citizens" || key === "merrick" || key === "fd_north") workingRecord.appType = key;
+  if (["citizens", "merrick", "fd_north", "pbt"].includes(key)) workingRecord.appType = key;
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "fd_north", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1087,7 +1095,7 @@ function showReview(record, detected = false) {
     const conf = record.appTypeConfidence || "";
     badge.className = `detect-badge ${type}`;
     badge.textContent =
-      type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${{ citizens: "Citizens", merrick: "Merrick", fd_north: "FD North" }[type] || type}${conf ? ` (${conf} confidence)` : ""}`;
+      type === "unknown" ? "Could not detect form — choose one below" : `Detected: ${{ citizens: "Citizens", merrick: "Merrick", fd_north: "FD North", pbt: "PB&T" }[type] || type}${conf ? ` (${conf} confidence)` : ""}`;
   } else {
     // Manual form pick or reopened submission — no detection banner.
     badge.className = "detect-badge hidden";
@@ -1479,7 +1487,7 @@ function init() {
   initSignNow();
   el("jumpFormSelect").addEventListener("change", (e) => {
     const v = e.target.value;
-    if (v === "citizens" || v === "merrick" || v === "fd_north") {
+    if (["citizens", "merrick", "fd_north", "pbt"].includes(v)) {
       el("appTypeSelect").value = v;
       if (workingRecord) workingRecord.appType = v;
     }
