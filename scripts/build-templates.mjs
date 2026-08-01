@@ -29,6 +29,7 @@ const FORMS = {
   bank_change: "bank_change.pdf",
   fd_north: "fd_north.pdf",
   pbt: "pbt.pdf",
+  crf: "crf.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });

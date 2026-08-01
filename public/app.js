@@ -355,6 +355,39 @@ const REVIEW_SECTIONS = [
     ["bankChange.docBankLetter", "Doc provided: bank letter", "checkbox"],
     ["bankChange.docBankStatement", "Doc provided: bank statement", "checkbox"],
   ]},
+  { title: "Change request (CRF)", fields: [
+    ["crf.merchantId", "Merchant ID number (defaults to PO MID)"],
+    ["crf.ownerName", "Account owner's name (defaults to Owner 1)"],
+    ["crf.dba", "Business name / DBA (defaults from Business)"],
+    ["crf.legalName", "Current legal name (defaults from Business)"],
+    ["crf.dbaName", "Change: new DBA name"],
+    ["crf.legalAddress", "Change: new legal address"],
+    ["crf.dbaAddress", "Change: new DBA address"],
+    ["crf.emailAddress", "Change: new email address"],
+    ["crf.dbaPhone", "Change: new DBA phone number"],
+    ["crf.dbaFax", "Change: new DBA fax number"],
+    ["crf.website", "Change: new website address"],
+    ["crf.amexOptBluePlan", "Amex Opt Blue plan", "select", [["", "—"], ["interchange", "Interchange"], ["tiered", "Tiered"]]],
+    ["crf.amexOptBlueRate", "Amex Opt Blue rate"],
+    ["crf.amexDirectSe", "Amex Direct SE#"],
+    ["crf.addDiscover", "Add Discover", "checkbox"],
+    ["crf.pinDebitDiscount", "Pin debit discount", "checkbox"],
+    ["crf.pinDebitRate", "Pin debit rate"],
+    ["crf.ebtFns", "EBT — FNS#"],
+    ["crf.ebtFee", "EBT — transaction fee"],
+    ["crf.addCashBenefits", "Add cash benefits", "checkbox"],
+    ["crf.myMerchantBenefits", "Add MX Merchant benefits", "checkbox"],
+    ["crf.myMerchantBenefitsRate", "MX Merchant benefits rate"],
+    ["crf.vmdDiscount", "Visa/MasterCard/Discover discount", "checkbox"],
+    ["crf.vmdNewRate", "Visa/MC/Discover new rate"],
+    ["crf.checkCardDiscount", "Check card discount", "checkbox"],
+    ["crf.checkCardRate", "Check card rate"],
+    ["crf.other1", "Other change 1"],
+    ["crf.other1Rate", "Other change 1 — rate"],
+    ["crf.other2", "Other change 2"],
+    ["crf.other2Rate", "Other change 2 — rate"],
+    ["crf.notes", "Notes"],
+  ]},
 ];
 
 const OWNER_FIELDS = [
@@ -404,6 +437,7 @@ const FORM_SECTIONS = {
   po: ["Purchase order (optional)", "Equipment", "Business", "Banking (from voided check)", "Coversheet — set-up form"],
   clover: ["Business", "Signatures (printed name / title / date)", "Purchase order (optional)"],
   bankchange: ["Bank account change", "Business", "Owner / Principal 1"],
+  crf: ["Change request (CRF)"],
 };
 
 // Within the shown sections, only these field keys matter for a given form, so a
@@ -417,6 +451,7 @@ const FORM_FIELDS = {
     "coversheet.avsCvv", "coversheet.serverNumbers", "coversheet.invoiceNumber",
     "coversheet.enWex", "coversheet.vasGiftCards", "coversheet.vasCheckServices",
   ],
+  crf: ["crf."],
   po: [
     "po.", "equipment.", "sales.salesAgentName", "coversheet.territoryManager", "coversheet.teamColor",
     "banking.bankName", "banking.routing", "banking.account",
@@ -539,6 +574,8 @@ function inferKinds(record) {
   if (equip.some((e) => /clover/i.test(e.model || e.type || ""))) kinds.push("clover");
   const bc = record.bankChange || {};
   if (["fundBankName", "fundRouting", "fundAccount", "billBankName", "billRouting", "billAccount"].some((k) => bc[k])) kinds.push("bankchange");
+  const crf = record.crf || {};
+  if (Object.entries(crf).some(([k, v]) => !["merchantId", "ownerName", "dba", "legalName"].includes(k) && v)) kinds.push("crf");
   return kinds;
 }
 async function downloadEntryPdf(id) {
@@ -784,7 +821,7 @@ function blankRecord() {
     appType: "unknown", appTypeConfidence: "", documents: {},
     business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
     serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}, {}],
-    coversheet: {}, po: {}, bankChange: {}, sales: {}, notes: "",
+    coversheet: {}, po: {}, bankChange: {}, crf: {}, sales: {}, notes: "",
   };
 }
 
@@ -800,7 +837,7 @@ function startBlankForm(key) {
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange", "crf"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1106,7 +1143,7 @@ function showReview(record, detected = false) {
 }
 
 async function generateSelected() {
-  const order = ["coversheet", "application", "po", "clover", "bankchange"];
+  const order = ["coversheet", "application", "po", "clover", "bankchange", "crf"];
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
@@ -1377,7 +1414,7 @@ function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 // Human-readable form labels used in downloaded file names.
-const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change" };
+const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request" };
 // Lead the file name with the Doing-Business-As name so downloads are auto-labeled
 // and easy to find. Falls back to legal name, then a generic label.
 function pdfFileName(record, kind) {
