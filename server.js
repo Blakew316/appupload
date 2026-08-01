@@ -7,6 +7,7 @@ import { extractFromImages, normalizeRecord } from "./lib/extract.js";
 import { fillForm, mergePdfs, prepareRecord, resolveForm, hasCloverEquipment } from "./lib/fillForm.js";
 import { extractMenu, normalizeMenu, buildCloverWorkbook } from "./lib/menu.js";
 import { MODELS } from "./lib/pricing.js";
+import { listMerchants } from "./lib/merchants.js";
 import { dbEnabled, listSubmissions, listAllSubmissions, getSubmission, upsertSubmission, deleteSubmission } from "./lib/db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,9 @@ app.get("/api/health", (_req, res) => {
 
 // Equipment model list (from the pricing matrix) for the PO equipment dropdown.
 app.get("/api/equipment", (_req, res) => res.json({ models: MODELS }));
+
+// Maverick merchant directory for the review form's merchant lookup.
+app.get("/api/merchants", async (_req, res) => res.json({ merchants: await listMerchants() }));
 
 /* ---------- Submission history (Supabase, shared across devices) ---------- */
 app.get("/api/history", async (_req, res) => {

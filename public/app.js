@@ -423,6 +423,78 @@ function buildEquipmentDatalist() {
   });
 }
 
+/* ---------------- Maverick merchant lookup ---------------- */
+let MERCHANTS = [];
+
+function buildMerchantDatalist() {
+  const dl = el("merchantList");
+  if (!dl) return;
+  dl.innerHTML = "";
+  MERCHANTS.forEach((m) => {
+    const opt = document.createElement("option");
+    // The MID suffix keeps same-named merchants distinguishable and matchable.
+    opt.value = m.mid ? `${m.merchant} — ${m.mid}` : m.merchant;
+    opt.label = [m.owner, m.salesRep].filter(Boolean).join(" · ");
+    dl.appendChild(opt);
+  });
+}
+
+const titleCase = (s) => String(s || "").trim().replace(/\S+/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+
+// Fill the review form from a directory entry. Identity fields are overwritten
+// (picking a merchant means "load this merchant"); everything else is untouched.
+function applyMerchant(m) {
+  if (!workingRecord) {
+    workingRecord = blankRecord();
+    currentHistoryId = null;
+  }
+  collectReview(); // keep any edits made before the lookup
+  const r = workingRecord;
+  r.business = r.business || {};
+  r.owners = Array.isArray(r.owners) ? r.owners : [{}, {}];
+  r.owners[0] = r.owners[0] || {};
+  r.po = r.po || {};
+  r.sales = r.sales || {};
+  r.transaction = r.transaction || {};
+
+  r.business.dba = m.merchant;
+  if (m.owner) {
+    const owner = titleCase(m.owner);
+    r.business.contactName = owner;
+    const parts = owner.split(/\s+/);
+    r.owners[0].first = parts[0] || "";
+    r.owners[0].last = parts.slice(1).join(" ");
+  }
+  if (m.phone) r.business.phone = m.phone;
+  if (m.email) r.business.email = String(m.email).toLowerCase();
+  if (m.mid) r.po.mid = m.mid; // also feeds the bank-change and CRF merchant-ID fallbacks
+  if (m.salesRep) r.sales.salesAgentName = m.salesRep;
+  if (m.volume) r.transaction.monthlyVolume = String(m.volume);
+  if (m.equipment) {
+    r.equipment = Array.isArray(r.equipment) ? r.equipment : [{}, {}, {}, {}];
+    r.equipment[0] = r.equipment[0] || {};
+    if (!r.equipment[0].model && !r.equipment[0].type) {
+      r.equipment[0].model = String(m.equipment).replace(/\s*\([^)]*\)\s*$/, "").trim();
+      if (!r.equipment[0].quantity) r.equipment[0].quantity = "1";
+    }
+  }
+
+  renderReviewForm(r);
+  focusForm(el("jumpFormSelect")?.value || "");
+  showBanner("info", `Loaded ${m.merchant}${m.mid ? ` (MID ${m.mid})` : ""} from the Maverick merchant list.`);
+}
+
+function onMerchantPicked() {
+  const q = (el("merchantSearch")?.value || "").trim();
+  if (!q) return;
+  const norm = (s) => String(s).toLowerCase();
+  const m =
+    MERCHANTS.find((x) => norm(x.mid ? `${x.merchant} — ${x.mid}` : x.merchant) === norm(q)) ||
+    MERCHANTS.find((x) => norm(x.merchant) === norm(q)) ||
+    MERCHANTS.find((x) => x.mid && norm(x.mid) === norm(q));
+  if (m) applyMerchant(m);
+}
+
 // Which review sections matter for each form, so picking a form shows only those fields.
 // Citizens and Merrick are entirely separate applications; they share the same
 // review data but are chosen independently.
@@ -1531,6 +1603,7 @@ function init() {
     focusForm(v);
   });
   el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
+  el("merchantSearch").addEventListener("change", onMerchantPicked);
   el("historySearch").addEventListener("input", paintHistory);
   el("repFilter").addEventListener("change", paintHistory);
   el("exportAllBtn").addEventListener("click", exportAll);
@@ -1572,6 +1645,13 @@ function init() {
   });
 
   checkHealth(); // renders history itself once the backend is determined
+  fetch("/api/merchants")
+    .then((r) => r.json())
+    .then((d) => {
+      MERCHANTS = d.merchants || [];
+      buildMerchantDatalist();
+    })
+    .catch(() => {});
   fetch("/api/equipment")
     .then((r) => r.json())
     .then((d) => {
