@@ -2,7 +2,7 @@
   --bg: #ffffff;
   --bg-grad-1: #ffffff;
   --bg-grad-2: #ffffff;
-  --card: #ffffff;
+  --card: rgba(255, 255, 255, 0.84); /* translucent over the video backdrop */
   --ink: #14274e; /* navy — default body/lettering color */
   --ink-soft: #3a4d7a; /* muted navy — secondary text */
   --line: #e3e5e9;
@@ -42,7 +42,7 @@ body {
 .bg-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(3, 6, 10, 0.42);
+  background: rgba(3, 6, 10, 0.28);
   z-index: -1;
   pointer-events: none;
 }
@@ -73,8 +73,10 @@ body {
   height: auto;
   margin: 0 auto;
   cursor: pointer;
-  /* Keep the logo on its own solid white chip so it stays crisp on the dark backdrop. */
-  background: #fff;
+  /* Translucent white chip: the video shows through, the logo stays legible. */
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   border-radius: 14px;
   padding: 10px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
@@ -98,6 +100,8 @@ main {
 
 .card {
   background: var(--card);
+  backdrop-filter: blur(7px) saturate(1.05);
+  -webkit-backdrop-filter: blur(7px) saturate(1.05);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -315,7 +319,7 @@ main {
   border-radius: 12px 12px 0 0;
   cursor: pointer;
 }
-.mode-tab.active { background: var(--card); color: var(--accent-dark); box-shadow: 0 -2px 8px rgba(0,0,0,0.04); }
+.mode-tab.active { background: var(--card); color: var(--accent-dark); box-shadow: 0 -2px 8px rgba(0,0,0,0.04); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
 
 /* Upload-screen header (title + manual form picker) */
 .upload-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -473,4 +477,16 @@ main {
   .card { padding: 18px; }
   .actions { flex-wrap: wrap; }
   .document { padding: 20px 18px; }
+}
+
+/* On wide screens, dock the content column to the right so the helmet in the
+   video backdrop stays in view; narrow screens keep the centered column. */
+@media (min-width: 1100px) {
+  .site-header,
+  .mode-tabs,
+  .rep-bar,
+  main {
+    margin-left: auto;
+    margin-right: 3vw;
+  }
 }
