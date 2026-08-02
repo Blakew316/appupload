@@ -34,8 +34,9 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  /* contain shows the entire shot; the dark backdrop image fills the letterbox bars */
-  object-fit: contain;
+  /* fill: the whole shot stays visible AND spans the full window edge-to-edge
+     (the frame stretches to the window's shape rather than cropping or boxing) */
+  object-fit: fill;
   z-index: -2;
   pointer-events: none;
 }
