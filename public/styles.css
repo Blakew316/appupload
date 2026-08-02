@@ -22,7 +22,9 @@
 body {
   margin: 0;
   color: var(--ink);
-  background: linear-gradient(160deg, var(--bg-grad-1), var(--bg-grad-2));
+  /* Full-site backdrop (public/backdrop.png). The form cards keep their solid
+     white --card backgrounds on top of it. */
+  background: #05080b url("backdrop.png") center / cover no-repeat fixed;
   min-height: 100vh;
   line-height: 1.5;
 }
@@ -50,6 +52,11 @@ body {
   height: auto;
   margin: 0 auto;
   cursor: pointer;
+  /* Keep the logo on its own solid white chip so it stays crisp on the dark backdrop. */
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
 }
 .brand-logo:focus-visible {
   outline: 2px solid var(--accent);
@@ -57,7 +64,7 @@ body {
   border-radius: 6px;
 }
 .tagline {
-  color: var(--ink-soft);
+  color: #b8cfdd;
   margin: 10px auto 0;
   max-width: 540px;
 }
@@ -277,10 +284,10 @@ main {
   gap: 8px;
 }
 .mode-tab {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-bottom: none;
-  background: #f1f2f5;
-  color: var(--ink-soft);
+  background: rgba(16, 24, 32, 0.72);
+  color: #cfe2ee;
   font: inherit;
   font-weight: 600;
   padding: 10px 18px;
@@ -295,7 +302,7 @@ main {
 
 /* Always-visible sales rep bar */
 .rep-bar { max-width: 820px; margin: 6px auto 0; padding: 0 0 4px; }
-.rep-bar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.rep-bar label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #cfe2ee; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
 .rep-bar input, .rep-bar select {
   border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px;
   font: inherit; font-size: 0.95rem; color: var(--ink); background: #fafbfc; min-width: 260px;

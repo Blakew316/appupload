@@ -112,3 +112,8 @@
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* The fixed full-page backdrop stutters on mobile Safari/Chrome; scroll it instead. */
+@media (max-width: 700px) {
+  body { background-attachment: scroll; }
+}
