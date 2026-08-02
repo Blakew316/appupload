@@ -459,13 +459,17 @@ main {
 }
 
 /* On wide screens, dock the content column to the right so the helmet in the
-   video backdrop stays in view; narrow screens keep the centered column. */
+   video backdrop stays in view, and shrink the whole panel (every field kept,
+   just rendered smaller). Tune --panel-zoom to taste: 0.5 = exact half size.
+   Narrow screens keep the centered, full-size column. */
+:root { --panel-zoom: 0.6; }
 @media (min-width: 1100px) {
   .mode-tabs,
   .rep-bar,
   main {
     margin-left: auto;
-    margin-right: 3vw;
+    margin-right: 5vw;
+    zoom: var(--panel-zoom);
   }
 }
 
