@@ -18,6 +18,13 @@
     <link rel="stylesheet" href="mobile.css" />
   </head>
   <body>
+    <!-- Looping site backdrop. The static backdrop.png doubles as poster and
+         reduced-motion / load-failure fallback; the scrim keeps text readable
+         over bright frames. -->
+    <video class="bg-video" autoplay muted loop playsinline preload="auto" poster="backdrop.png" aria-hidden="true" tabindex="-1">
+      <source src="backdrop.mp4" type="video/mp4" />
+    </video>
+    <div class="bg-scrim" aria-hidden="true"></div>
     <header class="site-header">
       <img id="brandLogo" class="brand-logo" src="logo.png" alt="Wholesale Payments — Team Maverick — return to start" role="button" tabindex="0" title="Start over" />
     </header>

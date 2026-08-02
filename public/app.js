@@ -1604,6 +1604,14 @@ function init() {
   });
   el("homeFormSelect").addEventListener("change", (e) => startBlankForm(e.target.value));
   el("merchantSearch").addEventListener("change", onMerchantPicked);
+  // Background video: muted autoplay is sometimes held until a user gesture —
+  // retry on the first pointer interaction so the loop always starts.
+  const bgVideo = document.querySelector(".bg-video");
+  if (bgVideo) {
+    const tryPlay = () => bgVideo.play().catch(() => {});
+    tryPlay();
+    document.addEventListener("pointerdown", tryPlay, { once: true });
+  }
   el("historySearch").addEventListener("input", paintHistory);
   el("repFilter").addEventListener("change", paintHistory);
   el("exportAllBtn").addEventListener("click", exportAll);
