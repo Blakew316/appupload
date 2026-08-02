@@ -829,6 +829,15 @@ function paintHistory() {
   if (q) list = list.filter((e) => `${e.dba || ""} ${typeLabel(e)} ${e.rep || ""}`.toLowerCase().includes(q));
   if (repSel) list = list.filter((e) => (e.rep || "") === repSel);
 
+  // Keep the list short: only the 3 most recent show by default; typing in the
+  // search box (or picking a rep) searches the full history.
+  let hiddenCount = 0;
+  if (!q && !repSel) {
+    const sorted = [...list].sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+    hiddenCount = Math.max(0, sorted.length - 3);
+    list = sorted.slice(0, 3);
+  }
+
   ul.innerHTML = "";
   if (list.length === 0) {
     const li = document.createElement("li");
@@ -868,6 +877,12 @@ function paintHistory() {
     li.appendChild(del);
     ul.appendChild(li);
   });
+  if (hiddenCount > 0) {
+    const li = document.createElement("li");
+    li.className = "history-more";
+    li.textContent = `+ ${hiddenCount} older submission${hiddenCount === 1 ? "" : "s"} — use the search box to find them`;
+    ul.appendChild(li);
+  }
   updateHistoryVisibility();
 }
 
