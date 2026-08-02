@@ -34,7 +34,8 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  object-fit: cover;
+  /* contain shows the entire shot; the dark backdrop image fills the letterbox bars */
+  object-fit: contain;
   z-index: -2;
   pointer-events: none;
 }
