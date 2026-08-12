@@ -388,6 +388,43 @@ const REVIEW_SECTIONS = [
     ["crf.other2Rate", "Other change 2 — rate"],
     ["crf.notes", "Notes"],
   ]},
+  { title: "Hemp & CBD (disclosure / amendment)", fields: [
+    ["cbd.agreementDate", "Merchant agreement date (MM/DD/YYYY \u2014 defaults to coversheet date)"],
+    ["cbd.stateHempLicense", "State Hemp retail license # (if applicable)"],
+    ["cbd.growsHemp", "Grows / cultivates Hemp plants?", "select", [["", "\u2014"], ["yes", "Yes"], ["no", "No"]]],
+    ["cbd.manufacturesHemp", "Manufactures / processes Hemp plants or CBD?", "select", [["", "\u2014"], ["yes", "Yes"], ["no", "No"]]],
+    ["cbd.advertisesHemp", "Markets or advertises Hemp/CBD to the public?", "select", [["", "\u2014"], ["yes", "Yes"], ["no", "No"]]],
+    ["cbd.products.0.name", "Product 1 \u2014 type/name"],
+    ["cbd.products.0.distributor", "Product 1 \u2014 distributor"],
+    ["cbd.products.0.state", "Product 1 \u2014 state of manufacture"],
+    ["cbd.products.1.name", "Product 2 \u2014 type/name"],
+    ["cbd.products.1.distributor", "Product 2 \u2014 distributor"],
+    ["cbd.products.1.state", "Product 2 \u2014 state of manufacture"],
+    ["cbd.products.2.name", "Product 3 \u2014 type/name"],
+    ["cbd.products.2.distributor", "Product 3 \u2014 distributor"],
+    ["cbd.products.2.state", "Product 3 \u2014 state of manufacture"],
+    ["cbd.products.3.name", "Product 4 \u2014 type/name"],
+    ["cbd.products.3.distributor", "Product 4 \u2014 distributor"],
+    ["cbd.products.3.state", "Product 4 \u2014 state of manufacture"],
+    ["cbd.products.4.name", "Product 5 \u2014 type/name"],
+    ["cbd.products.4.distributor", "Product 5 \u2014 distributor"],
+    ["cbd.products.4.state", "Product 5 \u2014 state of manufacture"],
+    ["cbd.products.5.name", "Product 6 \u2014 type/name"],
+    ["cbd.products.5.distributor", "Product 6 \u2014 distributor"],
+    ["cbd.products.5.state", "Product 6 \u2014 state of manufacture"],
+    ["cbd.products.6.name", "Product 7 \u2014 type/name"],
+    ["cbd.products.6.distributor", "Product 7 \u2014 distributor"],
+    ["cbd.products.6.state", "Product 7 \u2014 state of manufacture"],
+    ["cbd.products.7.name", "Product 8 \u2014 type/name"],
+    ["cbd.products.7.distributor", "Product 8 \u2014 distributor"],
+    ["cbd.products.7.state", "Product 8 \u2014 state of manufacture"],
+    ["cbd.products.8.name", "Product 9 \u2014 type/name"],
+    ["cbd.products.8.distributor", "Product 9 \u2014 distributor"],
+    ["cbd.products.8.state", "Product 9 \u2014 state of manufacture"],
+    ["cbd.products.9.name", "Product 10 \u2014 type/name"],
+    ["cbd.products.9.distributor", "Product 10 \u2014 distributor"],
+    ["cbd.products.9.state", "Product 10 \u2014 state of manufacture"],
+  ]},
 ];
 
 const OWNER_FIELDS = [
@@ -510,6 +547,8 @@ const FORM_SECTIONS = {
   clover: ["Business", "Signatures (printed name / title / date)", "Purchase order (optional)"],
   bankchange: ["Bank account change", "Business", "Owner / Principal 1"],
   crf: ["Change request (CRF)"],
+  hempcbd: ["Hemp & CBD (disclosure / amendment)", "Business", "Signatures (printed name / title / date)"],
+  cbdamendment: ["Hemp & CBD (disclosure / amendment)", "Business", "Signatures (printed name / title / date)"],
 };
 
 // Within the shown sections, only these field keys matter for a given form, so a
@@ -545,6 +584,14 @@ const FORM_FIELDS = {
     "business.dba", "business.legalName", "business.phone",
     "business.locationAddress", "business.locationCity", "business.locationState", "business.locationZip",
     "owners.0.first", "owners.0.last",
+  ],
+  hempcbd: [
+    "cbd.", "business.legalName", "business.dba",
+    "signatures.printedName", "signatures.title", "signatures.date",
+  ],
+  cbdamendment: [
+    "cbd.agreementDate", "business.legalName", "business.dba",
+    "signatures.printedName", "signatures.title", "signatures.date",
   ],
 };
 const fieldAllowed = (k, allow) => allow.some((a) => (a.endsWith(".") ? k.startsWith(a) : k === a));
@@ -648,6 +695,10 @@ function inferKinds(record) {
   if (["fundBankName", "fundRouting", "fundAccount", "billBankName", "billRouting", "billAccount"].some((k) => bc[k])) kinds.push("bankchange");
   const crf = record.crf || {};
   if (Object.entries(crf).some(([k, v]) => !["merchantId", "ownerName", "dba", "legalName"].includes(k) && v)) kinds.push("crf");
+  const cbd = record.cbd || {};
+  const cbdProducts = Array.isArray(cbd.products) ? cbd.products : Object.values(cbd.products || {});
+  if (["stateHempLicense", "growsHemp", "manufacturesHemp", "advertisesHemp"].some((k) => cbd[k]) ||
+      cbdProducts.some((pr) => pr && (pr.name || pr.distributor || pr.state))) kinds.push("hempcbd");
   return kinds;
 }
 async function downloadEntryPdf(id) {
@@ -908,7 +959,7 @@ function blankRecord() {
     appType: "unknown", appTypeConfidence: "", documents: {},
     business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
     serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}, {}],
-    coversheet: {}, po: {}, bankChange: {}, crf: {}, sales: {}, notes: "",
+    coversheet: {}, po: {}, bankChange: {}, crf: {}, cbd: {}, sales: {}, notes: "",
   };
 }
 
@@ -924,7 +975,7 @@ function startBlankForm(key) {
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange", "crf"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1230,7 +1281,7 @@ function showReview(record, detected = false) {
 }
 
 async function generateSelected() {
-  const order = ["coversheet", "application", "po", "clover", "bankchange", "crf"];
+  const order = ["coversheet", "application", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment"];
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
@@ -1501,7 +1552,7 @@ function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 // Human-readable form labels used in downloaded file names.
-const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request" };
+const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", hempcbd: "Hemp & CBD Disclosure", cbdamendment: "CBD Amendment" };
 // Lead the file name with the Doing-Business-As name so downloads are auto-labeled
 // and easy to find. Falls back to legal name, then a generic label.
 function pdfFileName(record, kind) {

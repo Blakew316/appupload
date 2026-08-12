@@ -152,7 +152,7 @@ app.post("/api/packet", async (req, res) => {
     let labelOverride = null;
     if (Array.isArray(kinds) && kinds.length) {
       // Multi-select: build the chosen documents in a fixed order and merge into one PDF.
-      const order = ["coversheet", "application", "po", "clover", "bankchange", "crf"];
+      const order = ["coversheet", "application", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment"];
       const chosen = order.filter((k) => kinds.includes(k));
       // Never silently drop a requested document: an Application needs a known type.
       if (chosen.includes("application") && !form) {
@@ -166,12 +166,14 @@ app.post("/api/packet", async (req, res) => {
         else if (k === "clover") parts.push(await fillForm("clover_addendum", base));
         else if (k === "bankchange") parts.push(await fillForm("bank_change", base));
         else if (k === "crf") parts.push(await fillForm("crf", base));
+        else if (k === "hempcbd") parts.push(await fillForm("hemp_cbd", base));
+        else if (k === "cbdamendment") parts.push(await fillForm("cbd_amendment", base));
       }
       if (!parts.length) {
         return res.status(400).json({ error: "None of the selected documents could be generated. For the Application, choose Citizens, Merrick, FD North, or PB&T above." });
       }
       bytes = parts.length === 1 ? parts[0] : await mergePdfs(parts);
-      const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request" };
+      const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", hempcbd: "Hemp & CBD Disclosure", cbdamendment: "CBD Amendment" };
       labelOverride = chosen.length === 1 ? labels[chosen[0]] : "Packet";
       name = chosen.length === 1 ? chosen[0] : "packet";
     } else if (kind === "coversheet") {
@@ -193,6 +195,12 @@ app.post("/api/packet", async (req, res) => {
     } else if (kind === "crf") {
       bytes = await fillForm("crf", base);
       name = "change-request";
+    } else if (kind === "hempcbd") {
+      bytes = await fillForm("hemp_cbd", base);
+      name = "hemp-cbd-disclosure";
+    } else if (kind === "cbdamendment") {
+      bytes = await fillForm("cbd_amendment", base);
+      name = "cbd-amendment";
     } else {
       // combined packet: coversheet + application (+ Clover addendum when Clover equipment is present)
       const parts = [await fillForm("coversheet", base)];
@@ -203,7 +211,7 @@ app.post("/api/packet", async (req, res) => {
     }
 
     // Lead the file name with the Doing-Business-As name so it's auto-labeled for easy finding.
-    const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", combined: "Packet" };
+    const labels = { coversheet: "Coversheet", application: "Application", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", hempcbd: "Hemp & CBD Disclosure", cbdamendment: "CBD Amendment", combined: "Packet" };
     const dba = (record.business.dba || record.business.legalName || "").trim();
     const safeDba = dba.replace(/[\/\\:*?"<>|\x00-\x1f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "Application";
     const fileName = `${safeDba} - ${labelOverride || labels[kind] || name}.pdf`;

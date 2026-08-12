@@ -30,6 +30,8 @@ const FORMS = {
   fd_north: "fd_north.pdf",
   pbt: "pbt.pdf",
   crf: "crf.pdf",
+  hemp_cbd: "hemp_cbd.pdf",
+  cbd_amendment: "cbd_amendment.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });
