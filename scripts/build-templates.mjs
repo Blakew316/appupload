@@ -32,6 +32,7 @@ const FORMS = {
   crf: "crf.pdf",
   hemp_cbd: "hemp_cbd.pdf",
   cbd_amendment: "cbd_amendment.pdf",
+  gift_card: "gift_card.pdf",
 };
 
 fs.mkdirSync(RENDER_DIR, { recursive: true });

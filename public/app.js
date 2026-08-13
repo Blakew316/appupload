@@ -425,6 +425,72 @@ const REVIEW_SECTIONS = [
     ["cbd.products.9.distributor", "Product 10 \u2014 distributor"],
     ["cbd.products.9.state", "Product 10 \u2014 state of manufacture"],
   ]},
+  { title: "Gift card program (application)", fields: [
+    ["giftCard.appKind", "Application kind", "select", [["", "—"], ["new", "New gift card merchant"], ["outlet", "Additional outlet — tie to"], ["entitle", "Additional outlet — entitle only (no cards)"]]],
+    ["giftCard.tieTo", "Tie to (existing merchant, for additional outlets)"],
+    ["giftCard.resubmission", "Resubmission", "checkbox"],
+    ["giftCard.additionalInfo", "Additional information attached", "checkbox"],
+    ["giftCard.numLocations", "# of locations"],
+    ["giftCard.eq.0.qty", "Equipment 1 — quantity"],
+    ["giftCard.eq.0.terminalType", "Equipment 1 — terminal type (if PC, enter PC)"],
+    ["giftCard.eq.0.bizType", "Equipment 1 — business type", "select", [["", "—"], ["retail", "Retail"], ["restaurant", "Restaurant"], ["qsr", "QSR"], ["lodging", "Lodging"], ["supermarket", "Supermarket"], ["carrental", "Car Rental"], ["moto", "MOTO"]]],
+    ["giftCard.eq.0.model", "Equipment 1 — model code and name"],
+    ["giftCard.eq.0.serial", "Equipment 1 — track/version/serial #"],
+    ["giftCard.eq.1.qty", "Equipment 2 — quantity"],
+    ["giftCard.eq.1.terminalType", "Equipment 2 — terminal type (if PC, enter PC)"],
+    ["giftCard.eq.1.bizType", "Equipment 2 — business type", "select", [["", "—"], ["retail", "Retail"], ["restaurant", "Restaurant"], ["qsr", "QSR"], ["lodging", "Lodging"], ["supermarket", "Supermarket"], ["carrental", "Car Rental"], ["moto", "MOTO"]]],
+    ["giftCard.eq.1.model", "Equipment 2 — model code and name"],
+    ["giftCard.eq.1.serial", "Equipment 2 — track/version/serial #"],
+    ["giftCard.eq.2.qty", "Equipment 3 — quantity"],
+    ["giftCard.eq.2.terminalType", "Equipment 3 — terminal type (if PC, enter PC)"],
+    ["giftCard.eq.2.bizType", "Equipment 3 — business type", "select", [["", "—"], ["retail", "Retail"], ["restaurant", "Restaurant"], ["qsr", "QSR"], ["lodging", "Lodging"], ["supermarket", "Supermarket"], ["carrental", "Car Rental"], ["moto", "MOTO"]]],
+    ["giftCard.eq.2.model", "Equipment 3 — model code and name"],
+    ["giftCard.eq.2.serial", "Equipment 3 — track/version/serial #"],
+    ["giftCard.merchantProcessingNum", "Merchant processing # (15 digits)"],
+    ["giftCard.giftCardMerchantNum", "Gift card merchant # (11 digits)"],
+    ["giftCard.chain", "Chain"],
+    ["giftCard.omahaMerchantNum", "Omaha merchant # (17 digits)"],
+    ["giftCard.mcc", "MCC (4 digits)"],
+  ]},
+  { title: "Gift card — locations & bank affiliation", fields: [
+    ["giftCard.setUpFee", "Set-up fee (G34)"],
+    ["giftCard.addlLocFee", "Additional location fee (G55)"],
+    ["giftCard.activationFee", "Transaction — activation (G66)"],
+    ["giftCard.redemptionFee", "Transaction — redemption (G67)"],
+    ["giftCard.reloadFee", "Transaction — reload (G68)"],
+    ["giftCard.voidFee", "Transaction — void/reversal (G69)"],
+    ["giftCard.balanceFee", "Transaction — balance inquiry (G70)"],
+    ["giftCard.otherFee", "Transaction — other (G71)"],
+    ["giftCard.monthlyMinFee", "Monthly minimum transaction fee (G72)"],
+    ["giftCard.monthlyFee", "Gift card monthly fee (32M)"],
+    ["giftCard.locations.0.dba", "Location 1 — DBA name"],
+    ["giftCard.locations.0.street", "Location 1 — street address"],
+    ["giftCard.locations.0.city", "Location 1 — city"],
+    ["giftCard.locations.0.state", "Location 1 — state"],
+    ["giftCard.locations.0.zip", "Location 1 — ZIP"],
+    ["giftCard.locations.0.phone", "Location 1 — phone"],
+    ["giftCard.locations.0.fax", "Location 1 — fax"],
+    ["giftCard.locations.0.contact", "Location 1 — contact name"],
+    ["giftCard.locations.0.positionTitle", "Location 1 — position/title"],
+    ["giftCard.locations.0.email", "Location 1 — e-mail"],
+    ["giftCard.locations.0.processingNum", "Location 1 — merchant processing #"],
+    ["giftCard.locations.1.dba", "Location 2 — DBA name"],
+    ["giftCard.locations.1.street", "Location 2 — street address"],
+    ["giftCard.locations.1.city", "Location 2 — city"],
+    ["giftCard.locations.1.state", "Location 2 — state"],
+    ["giftCard.locations.1.zip", "Location 2 — ZIP"],
+    ["giftCard.locations.1.phone", "Location 2 — phone"],
+    ["giftCard.locations.1.fax", "Location 2 — fax"],
+    ["giftCard.locations.1.contact", "Location 2 — contact name"],
+    ["giftCard.locations.1.positionTitle", "Location 2 — position/title"],
+    ["giftCard.locations.1.email", "Location 2 — e-mail"],
+    ["giftCard.locations.1.processingNum", "Location 2 — merchant processing #"],
+    ["giftCard.affBank", "Bank affiliation change — new bank (fills page 3)"],
+    ["giftCard.affMerchantId", "Bank affiliation — merchant ID (defaults to PO MID)"],
+    ["giftCard.affAltId", "Bank affiliation — credit card ID (Alt ID)"],
+    ["giftCard.affExistingNum", "Bank affiliation — existing gift card number"],
+    ["giftCard.affPromoNumber", "Bank affiliation — promo number"],
+  ]},
 ];
 
 const OWNER_FIELDS = [
@@ -549,6 +615,7 @@ const FORM_SECTIONS = {
   crf: ["Change request (CRF)"],
   hempcbd: ["Hemp & CBD (disclosure / amendment)", "Business", "Signatures (printed name / title / date)"],
   cbdamendment: ["Hemp & CBD (disclosure / amendment)", "Business", "Signatures (printed name / title / date)"],
+  giftcard: ["Gift card program (application)", "Gift card — locations & bank affiliation", "Business", "Owner / Principal 1", "Signatures (printed name / title / date)"],
 };
 
 // Within the shown sections, only these field keys matter for a given form, so a
@@ -591,6 +658,15 @@ const FORM_FIELDS = {
   ],
   cbdamendment: [
     "cbd.agreementDate", "business.legalName", "business.dba",
+    "signatures.printedName", "signatures.title", "signatures.date",
+  ],
+  giftcard: [
+    "giftCard.",
+    "business.legalName", "business.dba", "business.federalTaxId", "business.locationAddress",
+    "business.locationCity", "business.locationState", "business.locationZip",
+    "business.contactName", "business.phone", "business.fax", "business.email", "business.organizationType",
+    "owners.0.first", "owners.0.last", "owners.0.title", "owners.0.ownershipPct", "owners.0.homeAddress",
+    "owners.0.city", "owners.0.state", "owners.0.zip", "owners.0.phone", "owners.0.ssn",
     "signatures.printedName", "signatures.title", "signatures.date",
   ],
 };
@@ -699,6 +775,11 @@ function inferKinds(record) {
   const cbdProducts = Array.isArray(cbd.products) ? cbd.products : Object.values(cbd.products || {});
   if (["stateHempLicense", "growsHemp", "manufacturesHemp", "advertisesHemp"].some((k) => cbd[k]) ||
       cbdProducts.some((pr) => pr && (pr.name || pr.distributor || pr.state))) kinds.push("hempcbd");
+  const gc = record.giftCard || {};
+  const gcRows = (v) => (Array.isArray(v) ? v : Object.values(v || {}));
+  if (["appKind", "tieTo", "numLocations", "merchantProcessingNum", "giftCardMerchantNum", "chain", "omahaMerchantNum", "mcc", "affBank"].some((k) => gc[k]) ||
+      gcRows(gc.eq).some((e) => e && Object.values(e).some(Boolean)) ||
+      gcRows(gc.locations).some((l) => l && Object.values(l).some(Boolean))) kinds.push("giftcard");
   return kinds;
 }
 async function downloadEntryPdf(id) {
@@ -959,7 +1040,7 @@ function blankRecord() {
     appType: "unknown", appTypeConfidence: "", documents: {},
     business: {}, owners: [{}, {}], banking: {}, transaction: {}, fees: {},
     serviceAcceptance: {}, signatures: {}, equipment: [{}, {}, {}, {}],
-    coversheet: {}, po: {}, bankChange: {}, crf: {}, cbd: {}, sales: {}, notes: "",
+    coversheet: {}, po: {}, bankChange: {}, crf: {}, cbd: {}, giftCard: {}, sales: {}, notes: "",
   };
 }
 
@@ -975,7 +1056,7 @@ function startBlankForm(key) {
   showReview(workingRecord);
   focusForm(key);
   const js = el("jumpFormSelect");
-  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment"].includes(key) ? key : "";
+  if (js) js.value = ["citizens", "merrick", "fd_north", "pbt", "coversheet", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment", "giftcard"].includes(key) ? key : "";
   const hs = el("homeFormSelect");
   if (hs) hs.value = "";
 }
@@ -1281,7 +1362,7 @@ function showReview(record, detected = false) {
 }
 
 async function generateSelected() {
-  const order = ["coversheet", "application", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment"];
+  const order = ["coversheet", "application", "po", "clover", "bankchange", "crf", "hempcbd", "cbdamendment", "giftcard"];
   const kinds = order.filter((k) => dlChecks().some((c) => c.checked && c.value === k));
   if (!kinds.length) return;
   collectReview();
@@ -1552,7 +1633,7 @@ function esc(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 // Human-readable form labels used in downloaded file names.
-const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", hempcbd: "Hemp & CBD Disclosure", cbdamendment: "CBD Amendment" };
+const FORM_LABELS = { combined: "Packet", application: "Application", coversheet: "Coversheet", po: "Purchase Order", clover: "Clover Addendum", bankchange: "Bank Account Change", crf: "Change Request", hempcbd: "Hemp & CBD Disclosure", cbdamendment: "CBD Amendment", giftcard: "Gift Card Setup" };
 // Lead the file name with the Doing-Business-As name so downloads are auto-labeled
 // and easy to find. Falls back to legal name, then a generic label.
 function pdfFileName(record, kind) {
